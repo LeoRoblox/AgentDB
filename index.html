@@ -259,8 +259,12 @@
             const favList = document.getElementById('fav-list');
             const search = document.getElementById('search-input').value.toLowerCase();
             list.innerHTML = ""; favList.innerHTML = "";
+
+            let foundCount = 0;
+
             akten.forEach(a => {
                 if(a.title.toLowerCase().includes(search)) {
+                    foundCount++;
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
                     const card = `
                     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
@@ -276,6 +280,16 @@
                     list.innerHTML += card;
                 }
             });
+
+            // FALLBACK WENN KEINE AKTEN GEFUNDEN WURDEN
+            if(foundCount === 0) {
+                list.innerHTML = `
+                    <div class="col-span-full py-20 text-center fade-in">
+                        <i class="fas fa-folder-open text-zinc-800 text-6xl mb-4"></i>
+                        <p class="text-zinc-500 font-bold uppercase tracking-widest text-xs">Es sind bisher keine Akte vorhanden.</p>
+                    </div>`;
+            }
+
             document.getElementById('fav-section').classList.toggle('hidden', !currentUser.favorites || currentUser.favorites.length === 0);
         }
 
