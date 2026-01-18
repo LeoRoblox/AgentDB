@@ -13,7 +13,6 @@
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Bild Hover Blau */
         .evidence-preview:hover {
             outline: 3px solid #3b82f6;
             transform: scale(1.02);
@@ -21,7 +20,6 @@
             cursor: pointer;
         }
 
-        /* Lightbox Zoom */
         #lightbox {
             display: none;
             position: fixed;
@@ -139,7 +137,7 @@
                         <input type="text" id="akte-auth-users" placeholder="Berechtigte Agenten (mit Komma getrennt)" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm">
                     </div>
                     <div id="field-link" class="hidden fade-in bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl">
-                        <p class="text-[9px] text-blue-400 font-bold uppercase mb-1">Zugriffs-Link (erscheint nach Erstellung)</p>
+                        <p class="text-[9px] text-blue-400 font-bold uppercase mb-1">Zugriffs-Link</p>
                         <p id="preview-link" class="text-[10px] text-zinc-400 font-mono italic break-all"></p>
                     </div>
                     <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">Akte Sichern</button>
@@ -204,7 +202,6 @@
             const user = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
             if(!user || !pass) return alert("Eingaben fehlen!");
-
             if(authMode === 'register') {
                 if(localStorage.getItem(`user_${user}`)) return alert("Name vergeben!");
                 const newUser = {
@@ -239,13 +236,14 @@
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             document.getElementById('profile-menu').classList.add('hidden');
             if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'create-akte') resetForm();
         }
 
         function resetForm() {
             activeAkteId = null;
+            document.getElementById('form-title').innerText = "Akte Registrieren";
             document.getElementById('akte-title').value = "";
             document.getElementById('akte-stammdaten').value = "";
+            document.getElementById('akte-prio').value = "Leicht";
             document.getElementById('akte-level').value = "Level 1 (Public)";
             updateAkteFields();
         }
@@ -260,26 +258,39 @@
             }
         }
 
+        // KORRIGIERTE LOGIK: Aktualisieren statt Neu Erstellen
         function saveAkte() {
             const title = document.getElementById('akte-title').value;
-            if(!title) return;
-            const isNew = !activeAkteId;
-            const newAkte = {
-                id: activeAkteId || Date.now(),
-                title: title,
-                stammdaten: document.getElementById('akte-stammdaten').value,
-                prio: document.getElementById('akte-prio').value,
-                level: document.getElementById('akte-level').value,
-                authUsers: document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim()),
-                creator: currentUser.name,
-                createdDate: new Date().toLocaleDateString(),
-                entries: activeAkteId ? akten.find(a => a.id === activeAkteId).entries : []
-            };
+            if(!title) return alert("Titel fehlt!");
 
-            if(isNew) akten.push(newAkte);
-            else akten = akten.map(a => a.id === activeAkteId ? newAkte : a);
+            if(activeAkteId) {
+                // Bestehende Akte suchen und aktualisieren
+                const index = akten.findIndex(a => a.id === activeAkteId);
+                if(index !== -1) {
+                    akten[index].title = title;
+                    akten[index].stammdaten = document.getElementById('akte-stammdaten').value;
+                    akten[index].prio = document.getElementById('akte-prio').value;
+                    akten[index].level = document.getElementById('akte-level').value;
+                    akten[index].authUsers = document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim());
+                }
+            } else {
+                // Komplett neue Akte erstellen
+                const newAkte = {
+                    id: Date.now(),
+                    title: title,
+                    stammdaten: document.getElementById('akte-stammdaten').value,
+                    prio: document.getElementById('akte-prio').value,
+                    level: document.getElementById('akte-level').value,
+                    authUsers: document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim()),
+                    creator: currentUser.name,
+                    createdDate: new Date().toLocaleDateString(),
+                    entries: []
+                };
+                akten.push(newAkte);
+            }
 
             localStorage.setItem('akten', JSON.stringify(akten));
+            activeAkteId = null; // Reset
             showView('dashboard');
         }
 
@@ -293,12 +304,7 @@
                 const name = currentUser.name.toLowerCase();
                 const isCreator = a.creator === currentUser.name;
                 const isAuth = a.authUsers.includes(name);
-                
-                // Sichtbarkeits-Logik
-                let visible = false;
-                if(a.level === 'Level 1 (Public)') visible = true;
-                if(a.level === 'Level 2 (Link)' && isCreator) visible = true; // In Dashboard nur für Ersteller
-                if(a.level === 'Level 3 (Auth)' && (isCreator || isAuth)) visible = true;
+                let visible = (a.level === 'Level 1 (Public)') || (a.level === 'Level 2 (Link)' && isCreator) || (a.level === 'Level 3 (Auth)' && (isCreator || isAuth));
 
                 if(visible && a.title.toLowerCase().includes(search)) {
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
@@ -322,16 +328,11 @@
         function openAkte(id) {
             const akte = akten.find(a => a.id === id);
             if(!akte) return;
-            
-            // Check Link Access for Level 2 or 3
             const isCreator = akte.creator === currentUser.name;
             const isAuth = akte.authUsers.includes(currentUser.name.toLowerCase());
             if(akte.level === 'Level 3 (Auth)' && !isCreator && !isAuth) return alert("Zugriff verweigert!");
-
-            activeAkteId = id;
-            showView('details');
+            activeAkteId = id; showView('details');
             const isFav = currentUser.favorites && currentUser.favorites.includes(id);
-
             document.getElementById('details-content').innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-6">
@@ -341,11 +342,8 @@
                                 <span class="text-xs font-bold text-zinc-500"><i class="fas fa-calendar-alt mr-2"></i>${akte.createdDate}</span>
                             </div>
                             <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase italic">Sachverhalt</p>
-                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm leading-relaxed text-zinc-300">
-                                ${akte.stammdaten}
-                            </div>
+                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm leading-relaxed text-zinc-300">${akte.stammdaten}</div>
                         </div>
-
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
                             <h3 class="text-xs font-black mb-6 uppercase italic"><i class="fas fa-plus-square mr-2 text-blue-500"></i> Neuen Eintrag Hinzufügen</h3>
                             <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm mb-4 outline-none focus:border-blue-500" placeholder="Ereignis eingeben..."></textarea>
@@ -354,18 +352,19 @@
                                 <button onclick="addEntry(${id})" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase"><i class="fas fa-save mr-2"></i>Eintrag Sichern</button>
                             </div>
                         </div>
-
                         <div class="space-y-4">
-                            ${akte.entries.map((e, i) => `
+                            ${akte.entries.map((e, i) => {
+                                const isEntryAuthor = e.author === currentUser.name;
+                                return `
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
                                     <div class="flex justify-between mb-2">
                                         <p class="text-[10px] font-black text-blue-400 uppercase"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
-                                        ${isCreator ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                                        ${(isCreator || isEntryAuthor) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                                     </div>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">` : ''}
-                                </div>
-                            `).join('')}
+                                </div>`;
+                            }).join('')}
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -385,8 +384,20 @@
                 </div>`;
         }
 
+        function editAkte(id) {
+            const a = akten.find(x => x.id === id);
+            activeAkteId = id; 
+            showView('create-akte');
+            document.getElementById('form-title').innerText = "AKTE BEARBEITEN";
+            document.getElementById('akte-title').value = a.title;
+            document.getElementById('akte-stammdaten').value = a.stammdaten;
+            document.getElementById('akte-prio').value = a.prio;
+            document.getElementById('akte-level').value = a.level;
+            document.getElementById('akte-auth-users').value = a.authUsers.join(', ');
+            updateAkteFields();
+        }
+
         function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
-        
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
             const file = document.getElementById('entry-file').files[0];
@@ -399,7 +410,6 @@
             if(file) { const r = new FileReader(); r.onload = (e) => save(e.target.result); r.readAsDataURL(file); }
             else save(null);
         }
-
         function toggleFav(id) {
             const idx = currentUser.favorites.indexOf(id);
             if(idx > -1) currentUser.favorites.splice(idx, 1); else currentUser.favorites.push(id);
@@ -407,21 +417,9 @@
             localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
             openAkte(id);
         }
-
-        function editAkte(id) {
-            const a = akten.find(x => x.id === id);
-            activeAkteId = id; showView('create-akte');
-            document.getElementById('akte-title').value = a.title;
-            document.getElementById('akte-stammdaten').value = a.stammdaten;
-            document.getElementById('akte-prio').value = a.prio;
-            document.getElementById('akte-level').value = a.level;
-            updateAkteFields();
-        }
-
         function deleteAkte(id) { if(confirm("Akte wirklich vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
         function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
-        function deleteEntry(aid, i) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); }
-
+        function deleteEntry(aid, i) { if(confirm("Eintrag löschen?")) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); } }
         function showDienstausweis() {
             document.getElementById('modal-id').classList.remove('hidden');
             document.getElementById('card-name').innerText = currentUser.name;
@@ -430,7 +428,6 @@
             document.getElementById('card-avatar').src = currentUser.avatar;
             document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
         }
-
         function saveSettings() {
             const file = document.getElementById('set-avatar-file').files[0];
             const color = document.getElementById('set-card-color').value;
