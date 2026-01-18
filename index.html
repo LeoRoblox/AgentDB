@@ -320,10 +320,15 @@
                                     </div>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `
-                                        <div class="mt-4">
-                                            <div class="flex items-center mb-2">
-                                                <div class="w-1 h-3 bg-blue-600 mr-2 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.8)]"></div>
-                                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest italic">Beweismittel:</p>
+                                        <div class="mt-6">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-[3px] h-4 bg-blue-600 mr-2 rounded-full"></div>
+                                                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest italic">Beweismittel:</p>
+                                                </div>
+                                                <button onclick="downloadImage('${e.file}', 'BEWEIS_${akte.title.replace(/\s+/g, '_')}_${i}')" class="text-[9px] font-bold border border-zinc-700 px-2 py-1 rounded hover:bg-white hover:text-black transition">
+                                                    <i class="fas fa-download mr-1"></i> DOWNLOAD
+                                                </button>
                                             </div>
                                             <img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">
                                         </div>
@@ -342,6 +347,15 @@
                         </div>
                     </div>
                 </div>`;
+        }
+
+        function downloadImage(dataUrl, name) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = name + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function editAkte(id) {
