@@ -8,30 +8,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { background-color: #050505; color: #f4f4f4; font-family: 'Inter', sans-serif; }
         
+        body { 
+            background-color: #050505; 
+            color: #f4f4f4; 
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Animationen */
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Bild Hover Blau */
-        .evidence-preview:hover {
-            outline: 3px solid #3b82f6;
-            transform: scale(1.02);
-            transition: all 0.3s ease;
-            cursor: pointer;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Lightbox Zoom */
-        #lightbox {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
+        .btn-animate {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Spezial-Buttons Animation */
+        .btn-edit:hover { background-color: #7c3aed !important; color: white !important; }
+        .btn-delete:hover { background-color: #dc2626 !important; color: white !important; }
+        .btn-fav:hover { transform: scale(1.05); }
 
         .agent-card {
             background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
@@ -40,187 +41,222 @@
             background-image: radial-gradient(#222 1px, transparent 1px);
             background-size: 15px 15px;
         }
+
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(8px); }
         .hidden { display: none; }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="lightbox" onclick="this.style.display='none'">
-        <button class="absolute top-6 right-6 text-white text-5xl hover:text-blue-500 transition">&times;</button>
-        <img id="lightbox-img" src="" class="max-w-[90%] max-h-[90%] object-contain shadow-2xl">
-    </div>
-
     <div id="auth-screen" class="flex items-center justify-center min-h-screen p-4 fade-in">
-        <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-2xl">
-            <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-1 uppercase italic">System Zugriff</h2>
-            <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em] uppercase">Authentifizierung erforderlich</p>
+        <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <h2 class="text-2xl font-extrabold tracking-tighter text-center mb-1">SYSTEM ZUGRIFF</h2>
+            <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em]">AUTHENTIFIZIERUNG ERFORDERLICH</p>
             
             <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Benutzername</label>
-                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase">Benutzername</label>
+                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3 group focus-within:border-purple-500 transition">
                         <i class="fas fa-user text-purple-500 mr-3"></i>
-                        <input type="text" id="auth-user" placeholder="Agent Name..." class="bg-transparent border-none outline-none w-full text-sm">
+                        <input type="text" id="auth-user" placeholder="Agent Name eingeben..." class="bg-transparent border-none outline-none w-full text-sm">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Passwort</label>
-                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase">Passwort</label>
+                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3 group focus-within:border-blue-500 transition">
                         <i class="fas fa-key text-blue-500 mr-3"></i>
                         <input type="password" id="auth-pass" class="bg-transparent border-none outline-none w-full text-sm">
                     </div>
                 </div>
-                <button id="auth-btn" onclick="handleAuthAction()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black tracking-widest uppercase transition">Account Erstellen</button>
+                
+                <button id="auth-btn" onclick="handleAuth()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black tracking-widest btn-animate uppercase">Account Erstellen</button>
+                
                 <p id="auth-toggle-text" class="text-center text-xs text-zinc-500">
-                    Schon registriert? <a href="#" onclick="setAuthMode('login')" class="text-blue-400 font-bold">Hier einloggen.</a>
+                    Du hast schon ein Account? <a href="#" onclick="toggleAuthMode()" class="text-blue-400 font-bold">Melde dich an.</a>
                 </p>
             </div>
         </div>
     </div>
 
     <div id="main-interface" class="hidden">
-        <nav class="bg-black/80 border-b border-zinc-800 p-4 sticky top-0 z-50 backdrop-blur-md">
+        <nav class="bg-black/80 border-b border-zinc-800 p-4 sticky top-0 z-50 glass">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center space-x-8">
                     <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
-                    <div class="flex space-x-4">
-                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition"><i class="fas fa-columns mr-1"></i> Dashboard</button>
-                        <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase"><i class="fas fa-plus-circle mr-1"></i> Akte Erstellen</button>
+                    <div class="flex space-x-1">
+                        <button onclick="showView('dashboard')" class="px-4 py-2 text-xs font-bold hover:bg-zinc-800 rounded-md transition"><i class="fas fa-th-large mr-2"></i> Dashboard</button>
+                        <button onclick="showView('create-akte')" class="px-4 py-2 text-xs font-bold text-blue-400 hover:bg-blue-500/10 rounded-md transition"><i class="fas fa-plus mr-2"></i> Akte Erstellen</button>
                     </div>
                 </div>
+                
                 <div class="relative">
-                    <button onclick="document.getElementById('profile-menu').classList.toggle('hidden')" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
-                        <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover">
+                    <button onclick="toggleProfileMenu()" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full hover:bg-zinc-800 transition">
+                        <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-zinc-700">
                         <span id="nav-username" class="text-xs font-bold">AGENT</span>
                     </button>
-                    <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
-                        <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center"><i class="fas fa-cog mr-3"></i> Einstellungen</button>
-                        <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center"><i class="fas fa-id-card mr-3"></i> Dienstausweis</button>
-                        <button onclick="logout()" class="w-full text-left p-4 text-xs font-bold hover:bg-red-500/10 text-red-500 flex items-center border-t border-zinc-800"><i class="fas fa-sign-out-alt mr-3"></i> Abmelden</button>
+                    <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden fade-in">
+                        <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center"><i class="fas fa-user-edit mr-3 text-zinc-500"></i> Einstellungen</button>
+                        <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center"><i class="fas fa-id-badge mr-3 text-zinc-500"></i> Dienstausweis</button>
+                        <hr class="border-zinc-800">
+                        <button onclick="logout()" class="w-full text-left p-4 text-xs font-bold hover:bg-red-500/10 text-red-500 flex items-center"><i class="fas fa-power-off mr-3"></i> Abmelden</button>
                     </div>
                 </div>
             </div>
         </nav>
 
         <main class="p-6 max-w-7xl mx-auto">
-            <h2 id="welcome-msg" class="text-3xl font-black mb-8 italic uppercase">WILLKOMMEN</h2>
-
-            <div id="view-dashboard" class="view fade-in">
-                <div class="flex items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-8 max-w-md">
-                    <i class="fas fa-search text-zinc-500 mr-3 ml-2"></i>
-                    <input type="text" id="search-input" oninput="renderDashboard()" placeholder="Datenbank durchsuchen..." class="bg-transparent border-none outline-none w-full text-sm">
-                </div>
-                <div id="fav-section" class="mb-10 hidden">
-                    <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
-                    <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Aktive Akten</h3>
-                <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="welcome-container" class="mb-12 fade-in">
+                <h2 id="welcome-msg" class="text-4xl font-black tracking-tighter">WILLKOMMEN, AGENT</h2>
+                <p class="text-zinc-500 text-xs mt-1 uppercase tracking-widest">Systemstatus: Aktiv | Verbindung gesichert</p>
             </div>
 
-            <div id="view-create-akte" class="view hidden max-w-2xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
-                <h3 id="form-title" class="text-xl font-black mb-6 italic uppercase">Akte Registrieren</h3>
-                <div class="space-y-4">
-                    <input type="text" id="akte-title" placeholder="Titel der Akte" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500">
-                    <textarea id="akte-stammdaten" placeholder="Stammdaten / Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500"></textarea>
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="akte-prio" class="bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase">
-                            <option value="Leicht">Leicht</option>
-                            <option value="Schwer">Schwer</option>
-                            <option value="Kritisch">Kritisch</option>
-                        </select>
-                        <select id="akte-level" onchange="updateAkteFields()" class="bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase">
-                            <option value="Level 1 (Public)">Level 1 (Public)</option>
-                            <option value="Level 2 (Link)">Level 2 (Link)</option>
-                            <option value="Level 3 (Auth)">Level 3 (Auth)</option>
-                        </select>
-                    </div>
-                    <div id="field-auth" class="hidden fade-in">
-                        <input type="text" id="akte-auth-users" placeholder="Berechtigte Agenten (mit Komma getrennt)" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm">
-                    </div>
-                    <div id="field-link" class="hidden fade-in bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl">
-                        <p class="text-[9px] text-blue-400 font-bold uppercase mb-1">Zugriffs-Link (erscheint nach Erstellung)</p>
-                        <p id="preview-link" class="text-[10px] text-zinc-400 font-mono italic break-all"></p>
-                    </div>
-                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">Akte Sichern</button>
+            <div id="view-dashboard" class="view fade-in">
+                <div class="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-10 w-full max-w-xl shadow-inner">
+                    <i class="fas fa-search text-zinc-600 mr-4"></i>
+                    <input type="text" id="search-input" oninput="renderDashboard()" placeholder="Akte nach Titel suchen..." class="bg-transparent border-none outline-none w-full text-sm">
                 </div>
+
+                <div id="fav-section" class="mb-12 hidden">
+                    <h3 class="text-yellow-500 text-xs font-black mb-6 flex items-center tracking-widest uppercase"><i class="fas fa-star mr-2"></i> Favorisierte Akten</h3>
+                    <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <h3 class="text-blue-500 text-xs font-black mb-6 flex items-center tracking-widest uppercase"><i class="fas fa-folder-open mr-2"></i> Aktuelle Akten</h3>
+                <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
             <div id="view-details" class="view hidden fade-in">
                 <div id="details-content"></div>
             </div>
 
-            <div id="view-settings" class="view hidden max-w-xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
-                <h3 class="font-black mb-6 uppercase italic"><i class="fas fa-user-cog mr-2"></i> Profil</h3>
-                <div class="space-y-4">
-                    <input type="file" id="set-avatar-file" accept="image/*" class="w-full bg-black border border-zinc-800 p-3 rounded text-xs">
-                    <input type="color" id="set-card-color" class="w-full h-10 bg-black border border-zinc-800 rounded">
-                    <button onclick="saveSettings()" class="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase hover:bg-zinc-200 transition">Sichern</button>
+            <div id="view-create-akte" class="view hidden max-w-3xl mx-auto bg-zinc-900 p-10 rounded-2xl border border-zinc-800 shadow-2xl fade-in">
+                <h3 id="form-title" class="text-2xl font-black mb-8">AKTE ERSTELLEN</h3>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Titel des Aktes</label>
+                        <input type="text" id="akte-title" class="w-full bg-black border border-zinc-800 p-4 rounded-lg text-sm focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Stammdaten / Sachverhalt</label>
+                        <textarea id="akte-stammdaten" rows="6" class="w-full bg-black border border-zinc-800 p-4 rounded-lg text-sm focus:border-blue-500 transition"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Priorität</label>
+                            <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-lg text-sm appearance-none">
+                                <option value="Leicht">Leicht</option>
+                                <option value="Schwer">Schwer</option>
+                                <option value="Kritisch">Kritisch</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Sicherheits-Level</label>
+                            <select id="akte-level" onchange="toggleAuthInput()" class="w-full bg-black border border-zinc-800 p-4 rounded-lg text-sm appearance-none">
+                                <option value="Level 1 (Public)">Level 1 (Public)</option>
+                                <option value="Level 2 (Link)">Level 2 (Link)</option>
+                                <option value="Level 3 (Auth)">Level 3 (Auth)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="auth-users-container" class="hidden">
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Berechtigte Agenten (Kommagetrennt)</label>
+                        <input type="text" id="akte-auth-users" placeholder="Agent1, Agent2..." class="w-full bg-black border border-zinc-800 p-4 rounded-lg text-sm">
+                    </div>
+                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs tracking-widest mt-4 transition-all transform hover:scale-[1.02]">AKTE SPEICHERN</button>
+                </div>
+            </div>
+
+            <div id="view-settings" class="view hidden max-w-xl mx-auto bg-zinc-900 p-10 rounded-2xl border border-zinc-800 fade-in">
+                <h3 class="text-xl font-black mb-8">PROFIL EINSTELLUNGEN</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Profilbild ändern</label>
+                        <input type="file" id="set-avatar-file" accept="image/*" class="w-full bg-black border border-zinc-800 p-3 rounded text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Farbschema Dienstausweis</label>
+                        <input type="color" id="set-card-color" class="w-full h-12 bg-black border border-zinc-800 p-1 rounded cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 mb-2 uppercase">Profil-Beschreibung</label>
+                        <textarea id="set-bio" class="w-full bg-black border border-zinc-800 p-4 rounded text-sm" rows="3"></textarea>
+                    </div>
+                    <button onclick="saveSettings()" class="w-full bg-zinc-100 text-black py-4 rounded-xl font-black text-xs transition hover:bg-white">SPEICHERN</button>
+                </div>
+            </div>
+            
+            <div id="modal-id" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md transition-all">
+                <div class="agent-card w-full max-w-md p-8 border-r-8 relative shadow-2xl fade-in" id="card-border-render">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[9px] text-zinc-400 font-black tracking-[0.3em] mb-1">AGENTDB IDENTITY</p>
+                            <h2 id="card-name" class="text-4xl font-black uppercase mb-6 tracking-tighter italic">NAME</h2>
+                            <div class="space-y-2 text-xs">
+                                <p><span class="text-zinc-500 font-bold uppercase mr-2">ID:</span> <span id="card-id" class="font-mono">PDB-0000</span></p>
+                                <p><span class="text-zinc-500 font-bold uppercase mr-2">Beitritt:</span> <span id="card-joined">01/2026</span></p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 p-2 rounded-lg">
+                            <i class="fas fa-fingerprint text-4xl text-zinc-700"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 flex items-end justify-between">
+                        <div class="flex flex-col">
+                            <span class="text-xl font-black italic tracking-tighter opacity-20 mb-4">CONFIDENTIAL</span>
+                            <div class="flex items-center text-[10px] font-bold text-zinc-500">
+                                <div class="w-5 h-5 bg-zinc-800 rounded flex items-center justify-center mr-2">
+                                    <i class="fas fa-check text-[8px]"></i>
+                                </div>
+                                OFFICIAL IDENTIFICATION
+                            </div>
+                        </div>
+                        <div class="w-28 h-36 bg-zinc-800 border-4 rounded-lg overflow-hidden shadow-xl rotate-2" id="card-avatar-border">
+                            <img id="card-avatar" src="" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('modal-id').classList.add('hidden')" class="absolute -top-4 -right-4 bg-zinc-800 w-10 h-10 rounded-full flex items-center justify-center hover:bg-zinc-700 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-id" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 fade-in">
-        <div class="agent-card w-full max-w-md p-8 border-r-8 relative shadow-2xl" id="card-border-render">
-            <p class="text-[9px] text-zinc-400 font-black tracking-widest mb-1">AGENTDB IDENTITY</p>
-            <h2 id="card-name" class="text-4xl font-black uppercase mb-6 italic tracking-tighter">NAME</h2>
-            <div class="space-y-2 text-xs">
-                <p><span class="text-zinc-500 font-bold uppercase mr-2">ID:</span> <span id="card-id" class="font-mono text-blue-400">PDB-0000</span></p>
-                <p><span class="text-zinc-500 font-bold uppercase mr-2">Joined:</span> <span id="card-joined">01/2026</span></p>
-            </div>
-            <div class="mt-12 flex justify-between items-end">
-                <p class="text-xs font-bold text-zinc-500 flex items-center uppercase"><i class="fas fa-shield-alt mr-2"></i> Official ID</p>
-                <div class="w-24 h-32 bg-zinc-800 border-2 rounded overflow-hidden" id="card-avatar-border">
-                    <img id="card-avatar" src="" class="w-full h-full object-cover">
-                </div>
-            </div>
-            <button onclick="document.getElementById('modal-id').classList.add('hidden')" class="absolute top-4 right-4 text-zinc-600 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
-        </div>
-    </div>
-
     <script>
+        // State
         let currentUser = JSON.parse(localStorage.getItem('logged_in_user')) || null;
         let akten = JSON.parse(localStorage.getItem('akten')) || [];
-        let authMode = 'register';
+        let isLoginMode = true;
         let activeAkteId = null;
 
-        window.onload = () => { 
-            if(currentUser) loginSuccess(); 
-            const urlId = new URLSearchParams(window.location.search).get('id');
-            if(urlId && currentUser) openAkte(parseInt(urlId));
+        // Init
+        window.onload = () => {
+            if(currentUser) loginSuccess();
         };
 
-        function setAuthMode(mode) {
-            authMode = mode;
-            document.getElementById('auth-title').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
-            document.getElementById('auth-btn').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
-            document.getElementById('auth-toggle-text').innerHTML = mode === 'register' ? 
-                'Schon registriert? <a href="#" onclick="setAuthMode(\'login\')" class="text-blue-400 font-bold">Hier einloggen.</a>' : 
-                'Neu hier? <a href="#" onclick="setAuthMode(\'register\')" class="text-blue-400 font-bold">Hier registrieren.</a>';
-        }
+        function handleAuth() {
+            const user = document.getElementById('auth-user').value;
+            const pass = document.getElementById('auth-pass').value;
+            if(!user || !pass) return;
 
-        function handleAuthAction() {
-            const user = document.getElementById('auth-user').value.trim();
-            const pass = document.getElementById('auth-pass').value.trim();
-            if(!user || !pass) return alert("Eingaben fehlen!");
-
-            if(authMode === 'register') {
-                if(localStorage.getItem(`user_${user}`)) return alert("Name vergeben!");
+            if(isLoginMode) {
+                const storedUser = JSON.parse(localStorage.getItem(`user_${user}`));
+                if(storedUser && storedUser.pass === pass) {
+                    currentUser = storedUser;
+                    loginSuccess();
+                } else { alert("Zugriff verweigert."); }
+            } else {
                 const newUser = {
                     name: user, pass: pass,
                     id: 'PDB-' + Math.floor(1000 + Math.random() * 8999),
                     joined: new Date().toLocaleDateString('de-DE', { month: '2-digit', year: 'numeric' }),
-                    avatar: 'https://i.imgur.com/8m5XNlE.png',
-                    cardColor: '#3b82f6', favorites: []
+                    avatar: 'https://www.w3schools.com/howto/img_avatar.png',
+                    cardColor: '#3b82f6', bio: '', favorites: []
                 };
                 localStorage.setItem(`user_${user}`, JSON.stringify(newUser));
                 currentUser = newUser;
                 loginSuccess();
-            } else {
-                const stored = JSON.parse(localStorage.getItem(`user_${user}`));
-                if(stored && stored.pass === pass) { currentUser = stored; loginSuccess(); }
-                else { alert("Zugriff verweigert!"); }
             }
         }
 
@@ -230,8 +266,13 @@
             document.getElementById('main-interface').classList.remove('hidden');
             document.getElementById('nav-username').innerText = currentUser.name;
             document.getElementById('nav-avatar').src = currentUser.avatar;
-            document.getElementById('welcome-msg').innerHTML = `<i class="fas fa-terminal mr-3 text-blue-500"></i>Willkommen, Agent ${currentUser.name}`;
+            document.getElementById('welcome-msg').innerText = `WILLKOMMEN, AGENT ${currentUser.name}`;
             showView('dashboard');
+        }
+
+        function logout() {
+            localStorage.removeItem('logged_in_user');
+            location.reload();
         }
 
         function showView(viewId) {
@@ -239,47 +280,34 @@
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             document.getElementById('profile-menu').classList.add('hidden');
             if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'create-akte') resetForm();
         }
 
-        function resetForm() {
-            activeAkteId = null;
-            document.getElementById('akte-title').value = "";
-            document.getElementById('akte-stammdaten').value = "";
-            document.getElementById('akte-level').value = "Level 1 (Public)";
-            updateAkteFields();
-        }
-
-        function updateAkteFields() {
-            const lvl = document.getElementById('akte-level').value;
-            document.getElementById('field-auth').classList.toggle('hidden', lvl !== 'Level 3 (Auth)');
-            document.getElementById('field-link').classList.toggle('hidden', lvl !== 'Level 2 (Link)');
-            if(lvl === 'Level 2 (Link)') {
-                const id = activeAkteId || Date.now();
-                document.getElementById('preview-link').innerText = `${window.location.origin}${window.location.pathname}?id=${id}`;
-            }
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-btn').innerText = isLoginMode ? "EINLOGGEN" : "ACCOUNT ERSTELLEN";
+            document.getElementById('auth-toggle-text').innerHTML = isLoginMode ? 
+                'Neu hier? <a href="#" onclick="toggleAuthMode()" class="text-blue-400 font-bold">Account erstellen.</a>' : 
+                'Du hast schon ein Account? <a href="#" onclick="toggleAuthMode()" class="text-blue-400 font-bold">Melde dich an.</a>';
         }
 
         function saveAkte() {
-            const title = document.getElementById('akte-title').value;
-            if(!title) return;
-            const isNew = !activeAkteId;
-            const newAkte = {
+            const akte = {
                 id: activeAkteId || Date.now(),
-                title: title,
+                title: document.getElementById('akte-title').value,
                 stammdaten: document.getElementById('akte-stammdaten').value,
                 prio: document.getElementById('akte-prio').value,
                 level: document.getElementById('akte-level').value,
-                authUsers: document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim()),
+                authUsers: document.getElementById('akte-auth-users').value,
                 creator: currentUser.name,
                 createdDate: new Date().toLocaleDateString(),
                 entries: activeAkteId ? akten.find(a => a.id === activeAkteId).entries : []
             };
 
-            if(isNew) akten.push(newAkte);
-            else akten = akten.map(a => a.id === activeAkteId ? newAkte : a);
+            if(activeAkteId) akten = akten.map(a => a.id === activeAkteId ? akte : a);
+            else akten.push(akte);
 
             localStorage.setItem('akten', JSON.stringify(akten));
+            activeAkteId = null;
             showView('dashboard');
         }
 
@@ -287,97 +315,108 @@
             const list = document.getElementById('akte-list');
             const favList = document.getElementById('fav-list');
             const search = document.getElementById('search-input').value.toLowerCase();
-            list.innerHTML = ""; favList.innerHTML = "";
+            
+            list.innerHTML = "";
+            favList.innerHTML = "";
 
-            akten.forEach(a => {
-                const name = currentUser.name.toLowerCase();
-                const isCreator = a.creator === currentUser.name;
-                const isAuth = a.authUsers.includes(name);
-                
-                // Sichtbarkeits-Logik
-                let visible = false;
-                if(a.level === 'Level 1 (Public)') visible = true;
-                if(a.level === 'Level 2 (Link)' && isCreator) visible = true; // In Dashboard nur für Ersteller
-                if(a.level === 'Level 3 (Auth)' && (isCreator || isAuth)) visible = true;
-
-                if(visible && a.title.toLowerCase().includes(search)) {
-                    const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
-                    const card = `
-                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic">LVL ${a.level.split(' ')[1]}</span>
-                            <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-zinc-500'}"><i class="fas fa-exclamation-triangle mr-1"></i> ${a.prio}</span>
-                        </div>
-                        <h4 class="font-black text-xl mb-2 italic uppercase tracking-tighter">${a.title}</h4>
-                        <p class="text-xs text-zinc-500 mb-6 line-clamp-2">${a.stammdaten}</p>
-                        <button onclick="openAkte(${a.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition uppercase">Zugriff Erteilt</button>
-                    </div>`;
-                    if(isFav) favList.innerHTML += card;
-                    list.innerHTML += card;
-                }
+            const visibleAkten = akten.filter(a => {
+                const isAuth = a.level !== 'Level 3 (Auth)' || a.authUsers.includes(currentUser.name) || a.creator === currentUser.name;
+                return isAuth && a.title.toLowerCase().includes(search);
             });
+
+            if(visibleAkten.length === 0) {
+                list.innerHTML = '<div class="col-span-full py-20 text-center text-zinc-600"><i class="fas fa-folder-open text-4xl mb-4 opacity-20"></i><p>Es sind bisher keine FallAkten vorhanden.</p></div>';
+            }
+
+            visibleAkten.forEach(a => {
+                const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
+                const card = `
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative group hover:border-zinc-700 transition-all fade-in">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-black px-2 py-1 rounded bg-black border border-zinc-800 uppercase tracking-tighter">LVL ${a.level.split(' ')[1]}</span>
+                        <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-zinc-500'}">${a.prio}</span>
+                    </div>
+                    <h4 class="font-black text-xl mb-2 tracking-tight group-hover:text-blue-500 transition">${a.title}</h4>
+                    <p class="text-xs text-zinc-500 mb-6 line-clamp-2 leading-relaxed">${a.stammdaten}</p>
+                    <button onclick="openAkte(${a.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition transform hover:translate-y-[-2px]">ZUGRIFF</button>
+                </div>`;
+                
+                if(isFav) favList.innerHTML += card;
+                list.innerHTML += card;
+            });
+
             document.getElementById('fav-section').classList.toggle('hidden', !currentUser.favorites || currentUser.favorites.length === 0);
         }
 
         function openAkte(id) {
             const akte = akten.find(a => a.id === id);
-            if(!akte) return;
-            
-            // Check Link Access for Level 2 or 3
-            const isCreator = akte.creator === currentUser.name;
-            const isAuth = akte.authUsers.includes(currentUser.name.toLowerCase());
-            if(akte.level === 'Level 3 (Auth)' && !isCreator && !isAuth) return alert("Zugriff verweigert!");
-
+            const canEdit = akte.creator === currentUser.name;
+            const isFav = currentUser.favorites && currentUser.favorites.includes(id);
             activeAkteId = id;
             showView('details');
-            const isFav = currentUser.favorites && currentUser.favorites.includes(id);
-
+            
             document.getElementById('details-content').innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-6">
+                    <div class="lg:col-span-2 space-y-8">
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-3xl font-black uppercase italic tracking-tighter">${akte.title}</h2>
-                                <span class="text-xs font-bold text-zinc-500"><i class="fas fa-calendar-alt mr-2"></i>${akte.createdDate}</span>
-                            </div>
-                            <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase italic">Sachverhalt</p>
-                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm leading-relaxed text-zinc-300">
+                            <h2 class="text-3xl font-black mb-6 tracking-tighter uppercase">${akte.title}</h2>
+                            <p class="text-[10px] font-black text-zinc-500 mb-3 uppercase tracking-widest">Stammdaten / Sachverhalt</p>
+                            <div class="bg-black/50 p-6 rounded-xl border border-zinc-800 text-sm leading-relaxed text-zinc-300">
                                 ${akte.stammdaten}
                             </div>
                         </div>
-
+                        
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <h3 class="text-xs font-black mb-6 uppercase italic"><i class="fas fa-plus-square mr-2 text-blue-500"></i> Neuen Eintrag Hinzufügen</h3>
-                            <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm mb-4 outline-none focus:border-blue-500" placeholder="Ereignis eingeben..."></textarea>
-                            <div class="flex items-center justify-between">
-                                <input type="file" id="entry-file" class="text-[10px] text-zinc-500">
-                                <button onclick="addEntry(${id})" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase"><i class="fas fa-save mr-2"></i>Eintrag Sichern</button>
+                            <h3 class="text-xs font-black mb-6 flex items-center"><i class="fas fa-plus-circle text-blue-500 mr-3"></i> NEUEN EINTRAG HINZUFÜGEN</h3>
+                            <div class="space-y-4">
+                                <textarea id="entry-text" placeholder="Inhalt..." class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm" rows="3"></textarea>
+                                <div class="flex items-center justify-between">
+                                    <input type="file" id="entry-file" class="text-[10px] text-zinc-500">
+                                    <button onclick="addEntry(${id})" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl text-[10px] font-black flex items-center transition btn-animate">
+                                        EINTRAG SPEICHERN <i class="fas fa-paper-plane ml-3"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <div class="space-y-4">
-                            ${akte.entries.map((e, i) => `
+                            <h3 class="text-xs font-black text-zinc-500 uppercase tracking-widest">Verlauf</h3>
+                            ${akte.entries.map((e, idx) => `
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
-                                    <div class="flex justify-between mb-2">
-                                        <p class="text-[10px] font-black text-blue-400 uppercase"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
-                                        ${isCreator ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                                    <div class="flex justify-between mb-4">
+                                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${e.author}</span>
                                     </div>
-                                    <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
-                                    ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">` : ''}
+                                    <p class="text-sm text-zinc-300 bg-black/30 p-4 rounded-lg mb-4 border-l-2 border-zinc-700">${e.text}</p>
+                                    ${e.file ? `<div class="p-2 bg-black rounded-xl border border-zinc-800 inline-block">
+                                        <p class="text-[9px] font-bold text-zinc-500 mb-2 flex items-center"><i class="fas fa-paperclip mr-2 text-blue-500"></i> BEWEISMITTEL:</p>
+                                        <img src="${e.file}" class="max-w-md rounded-lg shadow-2xl">
+                                    </div>` : ''}
+                                    ${canEdit ? `<div class="flex justify-end space-x-6 mt-6">
+                                        <button class="text-[10px] font-bold text-zinc-600 hover:text-white transition"><i class="fas fa-pen mr-2"></i> Bearbeiten</button>
+                                        <button onclick="deleteEntry(${id}, ${idx})" class="text-[10px] font-bold text-red-500/50 hover:text-red-500 transition"><i class="fas fa-trash mr-2"></i> Löschen</button>
+                                    </div>` : ''}
                                 </div>
                             `).join('')}
                         </div>
                     </div>
+
                     <div class="space-y-4">
                         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-                            <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
-                            <div class="space-y-3">
-                                ${isCreator ? `
-                                    <button onclick="editAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-purple-500/20 text-purple-500 hover:bg-purple-500 hover:text-white transition"><i class="fas fa-edit mr-2"></i>BEARBEITEN</button>
-                                    <button onclick="deleteAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash-alt mr-2"></i>LÖSCHEN</button>
+                            <div class="space-y-4 text-xs font-bold">
+                                <div class="flex justify-between"><span class="text-zinc-500 uppercase">Agent:</span><span>${akte.creator}</span></div>
+                                <div class="flex justify-between"><span class="text-zinc-500 uppercase">Datum:</span><span>${akte.createdDate}</span></div>
+                            </div>
+                            <div class="mt-8 space-y-3">
+                                ${canEdit ? `
+                                    <button onclick="editAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black flex items-center justify-between border border-purple-500/20 text-purple-500 btn-animate btn-edit">
+                                        BEARBEITEN <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black flex items-center justify-between border border-red-500/20 text-red-500 btn-animate btn-delete">
+                                        LÖSCHEN <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 ` : ''}
-                                <button onclick="toggleFav(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition">
-                                    <i class="fas fa-star mr-2"></i>${isFav ? 'VON FAVORITEN LÖSCHEN' : 'FAVORISIEREN'}
+                                <button onclick="toggleFav(${id})" class="w-full p-4 rounded-xl text-xs font-black flex items-center justify-between transition-all duration-500 ${isFav ? 'bg-yellow-500 text-black shadow-[0_0_20px_rgba(234,179,8,0.3)]' : 'border border-yellow-500/20 text-yellow-500'}">
+                                    ${isFav ? 'FAVORIT ENTFERNEN' : 'FAVORISIEREN'} <i class="fas fa-star"></i>
                                 </button>
                             </div>
                         </div>
@@ -385,42 +424,77 @@
                 </div>`;
         }
 
-        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
-        
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
-            const file = document.getElementById('entry-file').files[0];
+            const fileInput = document.getElementById('entry-file');
+            if(!text && !fileInput.files[0]) return;
+
             const akte = akten.find(a => a.id === id);
-            const save = (data) => {
-                akte.entries.unshift({ author: currentUser.name, text, file: data });
+            const process = (imgData) => {
+                akte.entries.unshift({ author: currentUser.name, text, file: imgData });
                 localStorage.setItem('akten', JSON.stringify(akten));
                 openAkte(id);
             };
-            if(file) { const r = new FileReader(); r.onload = (e) => save(e.target.result); r.readAsDataURL(file); }
-            else save(null);
+
+            if(fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => process(e.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            } else process(null);
         }
 
         function toggleFav(id) {
+            if(!currentUser.favorites) currentUser.favorites = [];
             const idx = currentUser.favorites.indexOf(id);
-            if(idx > -1) currentUser.favorites.splice(idx, 1); else currentUser.favorites.push(id);
+            if(idx > -1) currentUser.favorites.splice(idx, 1);
+            else currentUser.favorites.push(id);
+            
             localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
             localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
             openAkte(id);
         }
 
-        function editAkte(id) {
-            const a = akten.find(x => x.id === id);
-            activeAkteId = id; showView('create-akte');
-            document.getElementById('akte-title').value = a.title;
-            document.getElementById('akte-stammdaten').value = a.stammdaten;
-            document.getElementById('akte-prio').value = a.prio;
-            document.getElementById('akte-level').value = a.level;
-            updateAkteFields();
+        function deleteAkte(id) {
+            if(confirm("Soll dieser Akt unwiderruflich gelöscht werden?")) {
+                akten = akten.filter(a => a.id !== id);
+                localStorage.setItem('akten', JSON.stringify(akten));
+                showView('dashboard');
+            }
         }
 
-        function deleteAkte(id) { if(confirm("Akte wirklich vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
-        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
-        function deleteEntry(aid, i) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); }
+        function editAkte(id) {
+            const akte = akten.find(a => a.id === id);
+            activeAkteId = id;
+            showView('create-akte');
+            document.getElementById('form-title').innerText = "AKTE BEARBEITEN";
+            document.getElementById('akte-title').value = akte.title;
+            document.getElementById('akte-stammdaten').value = akte.stammdaten;
+            document.getElementById('akte-prio').value = akte.prio;
+            document.getElementById('akte-level').value = akte.level;
+            toggleAuthInput();
+        }
+
+        function saveSettings() {
+            const file = document.getElementById('set-avatar-file').files[0];
+            const bio = document.getElementById('set-bio').value;
+            const color = document.getElementById('set-card-color').value;
+
+            const update = (img) => {
+                currentUser.avatar = img || currentUser.avatar;
+                currentUser.bio = bio;
+                currentUser.cardColor = color;
+                localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
+                localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+                loginSuccess();
+                alert("Profil aktualisiert.");
+            };
+
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => update(e.target.result);
+                reader.readAsDataURL(file);
+            } else update(null);
+        }
 
         function showDienstausweis() {
             document.getElementById('modal-id').classList.remove('hidden');
@@ -429,20 +503,15 @@
             document.getElementById('card-joined').innerText = currentUser.joined;
             document.getElementById('card-avatar').src = currentUser.avatar;
             document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
+            document.getElementById('card-avatar-border').style.borderColor = currentUser.cardColor;
         }
 
-        function saveSettings() {
-            const file = document.getElementById('set-avatar-file').files[0];
-            const color = document.getElementById('set-card-color').value;
-            const update = (img) => {
-                currentUser.avatar = img || currentUser.avatar;
-                currentUser.cardColor = color;
-                localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
-                localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
-                loginSuccess();
-            };
-            if(file) { const r = new FileReader(); r.onload = (e) => update(e.target.result); r.readAsDataURL(file); }
-            else update(null);
+        function toggleProfileMenu() { document.getElementById('profile-menu').classList.toggle('hidden'); }
+        function toggleAuthInput() { document.getElementById('auth-users-container').classList.toggle('hidden', document.getElementById('akte-level').value !== 'Level 3 (Auth)'); }
+        function deleteEntry(aid, eidx) { 
+            akten.find(a => a.id === aid).entries.splice(eidx, 1); 
+            localStorage.setItem('akten', JSON.stringify(akten)); 
+            openAkte(aid); 
         }
     </script>
 </body>
