@@ -89,7 +89,7 @@
                 <div class="relative">
                     <button onclick="document.getElementById('profile-menu').classList.toggle('hidden')" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
                         <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover">
-                        <span id="nav-username" class="text-xs font-bold">AGENT</span>
+                        <span id="nav-username" class="text-xs font-bold uppercase tracking-widest">AGENT</span>
                     </button>
                     <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
                         <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center"><i class="fas fa-cog mr-3"></i> Einstellungen</button>
@@ -112,7 +112,7 @@
                     <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
                     <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Öffentliche Akten</h3>
+                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Datenbank Einträge</h3>
                 <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
@@ -234,7 +234,6 @@
         function saveAkte() {
             const title = document.getElementById('akte-title').value;
             if(!title) return alert("Titel fehlt!");
-
             if(activeAkteId) {
                 const index = akten.findIndex(a => a.id === activeAkteId);
                 if(index !== -1) {
@@ -252,8 +251,7 @@
                 });
             }
             localStorage.setItem('akten', JSON.stringify(akten));
-            activeAkteId = null;
-            showView('dashboard');
+            activeAkteId = null; showView('dashboard');
         }
 
         function renderDashboard() {
@@ -261,14 +259,13 @@
             const favList = document.getElementById('fav-list');
             const search = document.getElementById('search-input').value.toLowerCase();
             list.innerHTML = ""; favList.innerHTML = "";
-
             akten.forEach(a => {
                 if(a.title.toLowerCase().includes(search)) {
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
                     const card = `
                     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
                         <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic">OFFEN</span>
+                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic">PUBLIC</span>
                             <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-zinc-500'}"><i class="fas fa-exclamation-triangle mr-1"></i> ${a.prio}</span>
                         </div>
                         <h4 class="font-black text-xl mb-2 italic uppercase tracking-tighter">${a.title}</h4>
@@ -286,6 +283,7 @@
             const akte = akten.find(a => a.id === id);
             if(!akte) return;
             activeAkteId = id; showView('details');
+            const isAdmin = currentUser.name === "Zynox";
             const isCreator = akte.creator === currentUser.name;
             const isFav = currentUser.favorites && currentUser.favorites.includes(id);
 
@@ -313,7 +311,7 @@
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
                                     <div class="flex justify-between mb-2">
                                         <p class="text-[10px] font-black text-blue-400 uppercase"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
-                                        ${(isCreator || e.author === currentUser.name) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                                        ${(isAdmin || isCreator || e.author === currentUser.name) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                                     </div>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">` : ''}
@@ -324,13 +322,9 @@
                         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
                             <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
                             <div class="space-y-3">
-                                ${isCreator ? `
-                                    <button onclick="editAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-purple-500/20 text-purple-500 hover:bg-purple-500 hover:text-white transition"><i class="fas fa-edit mr-2"></i>BEARBEITEN</button>
-                                    <button onclick="deleteAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash-alt mr-2"></i>LÖSCHEN</button>
-                                ` : ''}
-                                <button onclick="toggleFav(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition">
-                                    <i class="fas fa-star mr-2"></i>${isFav ? 'VON FAVORITEN LÖSCHEN' : 'FAVORISIEREN'}
-                                </button>
+                                ${isCreator ? `<button onclick="editAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-purple-500/20 text-purple-500 hover:bg-purple-500 hover:text-white transition uppercase"><i class="fas fa-edit mr-2"></i>Bearbeiten</button>` : ''}
+                                ${(isAdmin || isCreator) ? `<button onclick="deleteAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition uppercase"><i class="fas fa-trash-alt mr-2"></i>${isAdmin && !isCreator ? 'Admin Löschung' : 'Akte Löschen'}</button>` : ''}
+                                <button onclick="toggleFav(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>${isFav ? 'Vom Radar entfernen' : 'Favorisieren'}</button>
                             </div>
                         </div>
                     </div>
@@ -367,8 +361,8 @@
             openAkte(id);
         }
 
-        function deleteAkte(id) { if(confirm("Akte vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
-        function deleteEntry(aid, i) { if(confirm("Eintrag löschen?")) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); } }
+        function deleteAkte(id) { if(confirm("Akte unwiderruflich vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
+        function deleteEntry(aid, i) { if(confirm("Eintrag entfernen?")) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); } }
         function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
         function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
         
