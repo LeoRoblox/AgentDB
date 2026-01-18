@@ -259,9 +259,7 @@
             const favList = document.getElementById('fav-list');
             const search = document.getElementById('search-input').value.toLowerCase();
             list.innerHTML = ""; favList.innerHTML = "";
-
             let foundCount = 0;
-
             akten.forEach(a => {
                 if(a.title.toLowerCase().includes(search)) {
                     foundCount++;
@@ -280,16 +278,9 @@
                     list.innerHTML += card;
                 }
             });
-
-            // FALLBACK WENN KEINE AKTEN GEFUNDEN WURDEN
             if(foundCount === 0) {
-                list.innerHTML = `
-                    <div class="col-span-full py-20 text-center fade-in">
-                        <i class="fas fa-folder-open text-zinc-800 text-6xl mb-4"></i>
-                        <p class="text-zinc-500 font-bold uppercase tracking-widest text-xs">Es sind bisher keine Akte vorhanden.</p>
-                    </div>`;
+                list.innerHTML = `<div class="col-span-full py-20 text-center fade-in"><i class="fas fa-folder-open text-zinc-800 text-6xl mb-4"></i><p class="text-zinc-500 font-bold uppercase tracking-widest text-xs">Es sind bisher keine Akte vorhanden.</p></div>`;
             }
-
             document.getElementById('fav-section').classList.toggle('hidden', !currentUser.favorites || currentUser.favorites.length === 0);
         }
 
@@ -328,7 +319,15 @@
                                         ${(isAdmin || isCreator || e.author === currentUser.name) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                                     </div>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
-                                    ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">` : ''}
+                                    ${e.file ? `
+                                        <div class="mt-4">
+                                            <div class="flex items-center mb-2">
+                                                <div class="w-1 h-3 bg-blue-600 mr-2 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.8)]"></div>
+                                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-widest italic">Beweismittel:</p>
+                                            </div>
+                                            <img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">
+                                        </div>
+                                    ` : ''}
                                 </div>`).join('')}
                         </div>
                     </div>
