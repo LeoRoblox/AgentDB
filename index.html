@@ -112,7 +112,7 @@
                     <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
                     <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Aktive Akten</h3>
+                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Öffentliche Akten</h3>
                 <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
@@ -121,25 +121,14 @@
                 <div class="space-y-4">
                     <input type="text" id="akte-title" placeholder="Titel der Akte" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500">
                     <textarea id="akte-stammdaten" placeholder="Stammdaten / Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500"></textarea>
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="akte-prio" class="bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase">
-                            <option value="Leicht">Leicht</option>
-                            <option value="Schwer">Schwer</option>
-                            <option value="Kritisch">Kritisch</option>
-                        </select>
-                        <select id="akte-level" onchange="updateAkteFields()" class="bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase">
-                            <option value="Level 1 (Public)">Level 1 (Public)</option>
-                            <option value="Level 2 (Link)">Level 2 (Link)</option>
-                            <option value="Level 3 (Auth)">Level 3 (Auth)</option>
-                        </select>
-                    </div>
-                    <div id="field-auth" class="hidden fade-in">
-                        <input type="text" id="akte-auth-users" placeholder="Berechtigte Agenten (mit Komma getrennt)" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm">
-                    </div>
-                    <div id="field-link" class="hidden fade-in bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl">
-                        <p class="text-[9px] text-blue-400 font-bold uppercase mb-1">Zugriffs-Link</p>
-                        <p id="preview-link" class="text-[10px] text-zinc-400 font-mono italic break-all"></p>
-                    </div>
+                    
+                    <label class="block text-[10px] font-bold text-zinc-500 uppercase italic mb-[-10px]">Prioritätsstufe</label>
+                    <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase outline-none focus:border-blue-500">
+                        <option value="Leicht">Leicht</option>
+                        <option value="Schwer">Schwer</option>
+                        <option value="Kritisch">Kritisch</option>
+                    </select>
+
                     <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">Akte Sichern</button>
                 </div>
             </div>
@@ -183,11 +172,7 @@
         let authMode = 'register';
         let activeAkteId = null;
 
-        window.onload = () => { 
-            if(currentUser) loginSuccess(); 
-            const urlId = new URLSearchParams(window.location.search).get('id');
-            if(urlId && currentUser) openAkte(parseInt(urlId));
-        };
+        window.onload = () => { if(currentUser) loginSuccess(); };
 
         function setAuthMode(mode) {
             authMode = mode;
@@ -212,12 +197,11 @@
                     cardColor: '#3b82f6', favorites: []
                 };
                 localStorage.setItem(`user_${user}`, JSON.stringify(newUser));
-                currentUser = newUser;
-                loginSuccess();
+                currentUser = newUser; loginSuccess();
             } else {
                 const stored = JSON.parse(localStorage.getItem(`user_${user}`));
                 if(stored && stored.pass === pass) { currentUser = stored; loginSuccess(); }
-                else { alert("Zugriff verweigert!"); }
+                else alert("Zugriff verweigert!");
             }
         }
 
@@ -236,6 +220,7 @@
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             document.getElementById('profile-menu').classList.add('hidden');
             if(viewId === 'dashboard') renderDashboard();
+            if(viewId === 'create-akte' && !activeAkteId) resetForm();
         }
 
         function resetForm() {
@@ -244,53 +229,30 @@
             document.getElementById('akte-title').value = "";
             document.getElementById('akte-stammdaten').value = "";
             document.getElementById('akte-prio').value = "Leicht";
-            document.getElementById('akte-level').value = "Level 1 (Public)";
-            updateAkteFields();
         }
 
-        function updateAkteFields() {
-            const lvl = document.getElementById('akte-level').value;
-            document.getElementById('field-auth').classList.toggle('hidden', lvl !== 'Level 3 (Auth)');
-            document.getElementById('field-link').classList.toggle('hidden', lvl !== 'Level 2 (Link)');
-            if(lvl === 'Level 2 (Link)') {
-                const id = activeAkteId || Date.now();
-                document.getElementById('preview-link').innerText = `${window.location.origin}${window.location.pathname}?id=${id}`;
-            }
-        }
-
-        // KORRIGIERTE LOGIK: Aktualisieren statt Neu Erstellen
         function saveAkte() {
             const title = document.getElementById('akte-title').value;
             if(!title) return alert("Titel fehlt!");
 
             if(activeAkteId) {
-                // Bestehende Akte suchen und aktualisieren
                 const index = akten.findIndex(a => a.id === activeAkteId);
                 if(index !== -1) {
                     akten[index].title = title;
                     akten[index].stammdaten = document.getElementById('akte-stammdaten').value;
                     akten[index].prio = document.getElementById('akte-prio').value;
-                    akten[index].level = document.getElementById('akte-level').value;
-                    akten[index].authUsers = document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim());
                 }
             } else {
-                // Komplett neue Akte erstellen
-                const newAkte = {
-                    id: Date.now(),
-                    title: title,
+                akten.push({
+                    id: Date.now(), title: title,
                     stammdaten: document.getElementById('akte-stammdaten').value,
                     prio: document.getElementById('akte-prio').value,
-                    level: document.getElementById('akte-level').value,
-                    authUsers: document.getElementById('akte-auth-users').value.toLowerCase().split(',').map(u => u.trim()),
-                    creator: currentUser.name,
-                    createdDate: new Date().toLocaleDateString(),
+                    creator: currentUser.name, createdDate: new Date().toLocaleDateString(),
                     entries: []
-                };
-                akten.push(newAkte);
+                });
             }
-
             localStorage.setItem('akten', JSON.stringify(akten));
-            activeAkteId = null; // Reset
+            activeAkteId = null;
             showView('dashboard');
         }
 
@@ -301,22 +263,17 @@
             list.innerHTML = ""; favList.innerHTML = "";
 
             akten.forEach(a => {
-                const name = currentUser.name.toLowerCase();
-                const isCreator = a.creator === currentUser.name;
-                const isAuth = a.authUsers.includes(name);
-                let visible = (a.level === 'Level 1 (Public)') || (a.level === 'Level 2 (Link)' && isCreator) || (a.level === 'Level 3 (Auth)' && (isCreator || isAuth));
-
-                if(visible && a.title.toLowerCase().includes(search)) {
+                if(a.title.toLowerCase().includes(search)) {
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
                     const card = `
                     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
                         <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic">LVL ${a.level.split(' ')[1]}</span>
+                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic">OFFEN</span>
                             <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-zinc-500'}"><i class="fas fa-exclamation-triangle mr-1"></i> ${a.prio}</span>
                         </div>
                         <h4 class="font-black text-xl mb-2 italic uppercase tracking-tighter">${a.title}</h4>
                         <p class="text-xs text-zinc-500 mb-6 line-clamp-2">${a.stammdaten}</p>
-                        <button onclick="openAkte(${a.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition uppercase">Zugriff Erteilt</button>
+                        <button onclick="openAkte(${a.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition uppercase">Akte Öffnen</button>
                     </div>`;
                     if(isFav) favList.innerHTML += card;
                     list.innerHTML += card;
@@ -328,11 +285,10 @@
         function openAkte(id) {
             const akte = akten.find(a => a.id === id);
             if(!akte) return;
-            const isCreator = akte.creator === currentUser.name;
-            const isAuth = akte.authUsers.includes(currentUser.name.toLowerCase());
-            if(akte.level === 'Level 3 (Auth)' && !isCreator && !isAuth) return alert("Zugriff verweigert!");
             activeAkteId = id; showView('details');
+            const isCreator = akte.creator === currentUser.name;
             const isFav = currentUser.favorites && currentUser.favorites.includes(id);
+
             document.getElementById('details-content').innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-6">
@@ -342,29 +298,26 @@
                                 <span class="text-xs font-bold text-zinc-500"><i class="fas fa-calendar-alt mr-2"></i>${akte.createdDate}</span>
                             </div>
                             <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase italic">Sachverhalt</p>
-                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm leading-relaxed text-zinc-300">${akte.stammdaten}</div>
+                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300">${akte.stammdaten}</div>
                         </div>
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
                             <h3 class="text-xs font-black mb-6 uppercase italic"><i class="fas fa-plus-square mr-2 text-blue-500"></i> Neuen Eintrag Hinzufügen</h3>
                             <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm mb-4 outline-none focus:border-blue-500" placeholder="Ereignis eingeben..."></textarea>
                             <div class="flex items-center justify-between">
                                 <input type="file" id="entry-file" class="text-[10px] text-zinc-500">
-                                <button onclick="addEntry(${id})" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase"><i class="fas fa-save mr-2"></i>Eintrag Sichern</button>
+                                <button onclick="addEntry(${id})" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Eintrag Sichern</button>
                             </div>
                         </div>
                         <div class="space-y-4">
-                            ${akte.entries.map((e, i) => {
-                                const isEntryAuthor = e.author === currentUser.name;
-                                return `
+                            ${akte.entries.map((e, i) => `
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
                                     <div class="flex justify-between mb-2">
                                         <p class="text-[10px] font-black text-blue-400 uppercase"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
-                                        ${(isCreator || isEntryAuthor) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
+                                        ${(isCreator || e.author === currentUser.name) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>` : ''}
                                     </div>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">` : ''}
-                                </div>`;
-                            }).join('')}
+                                </div>`).join('')}
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -386,30 +339,26 @@
 
         function editAkte(id) {
             const a = akten.find(x => x.id === id);
-            activeAkteId = id; 
-            showView('create-akte');
+            activeAkteId = id; showView('create-akte');
             document.getElementById('form-title').innerText = "AKTE BEARBEITEN";
             document.getElementById('akte-title').value = a.title;
             document.getElementById('akte-stammdaten').value = a.stammdaten;
             document.getElementById('akte-prio').value = a.prio;
-            document.getElementById('akte-level').value = a.level;
-            document.getElementById('akte-auth-users').value = a.authUsers.join(', ');
-            updateAkteFields();
         }
 
-        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
             const file = document.getElementById('entry-file').files[0];
+            if(!text && !file) return;
             const akte = akten.find(a => a.id === id);
             const save = (data) => {
                 akte.entries.unshift({ author: currentUser.name, text, file: data });
-                localStorage.setItem('akten', JSON.stringify(akten));
-                openAkte(id);
+                localStorage.setItem('akten', JSON.stringify(akten)); openAkte(id);
             };
             if(file) { const r = new FileReader(); r.onload = (e) => save(e.target.result); r.readAsDataURL(file); }
             else save(null);
         }
+
         function toggleFav(id) {
             const idx = currentUser.favorites.indexOf(id);
             if(idx > -1) currentUser.favorites.splice(idx, 1); else currentUser.favorites.push(id);
@@ -417,9 +366,12 @@
             localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
             openAkte(id);
         }
-        function deleteAkte(id) { if(confirm("Akte wirklich vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
-        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
+
+        function deleteAkte(id) { if(confirm("Akte vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
         function deleteEntry(aid, i) { if(confirm("Eintrag löschen?")) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); } }
+        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
+        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
+        
         function showDienstausweis() {
             document.getElementById('modal-id').classList.remove('hidden');
             document.getElementById('card-name').innerText = currentUser.name;
@@ -428,6 +380,7 @@
             document.getElementById('card-avatar').src = currentUser.avatar;
             document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
         }
+
         function saveSettings() {
             const file = document.getElementById('set-avatar-file').files[0];
             const color = document.getElementById('set-card-color').value;
