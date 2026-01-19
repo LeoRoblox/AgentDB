@@ -6,6 +6,10 @@
     <title>AGENTDB - Systemzugriff</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
@@ -77,12 +81,10 @@
             </div>
             <div class="p-6 space-y-4">
                 <div class="border border-green-500/20 bg-green-500/5 p-4 rounded-lg">
-                    <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.0.0</span>
-                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">SYSTEM ERÖFFNET</h3>
+                    <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.1.0 - GLOBAL UPDATE</span>
+                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">NETZWERK AKTIVIERT</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed terminal-text">
-                        Dieses System "AgentDB" wurde nun eröffnet und kann genutzt werden. 
-                        Dieses System dient nicht zum Doxxing sondern dafür das man sich sachen hier speichert 
-                        und andere sehen können was die Person macht.
+                        Das System ist nun GLOBAL. Alle Akten werden in der Cloud gespeichert und sind für jeden Agenten mit dieser Datei sichtbar.
                     </p>
                 </div>
             </div>
@@ -91,19 +93,19 @@
 
     <div id="auth-screen" class="flex items-center justify-center min-h-screen p-4 fade-in">
         <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-2xl">
-            <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-1 uppercase italic">System Zugriff</h2>
+            <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-1 uppercase italic text-white">Account Erstellen</h2>
             <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em] uppercase">Authentifizierung erforderlich</p>
             
             <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic text-white">Benutzername</label>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Benutzername</label>
                     <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
                         <i class="fas fa-user text-purple-500 mr-3"></i>
                         <input type="text" id="auth-user" placeholder="Agent Name..." class="bg-transparent border-none outline-none w-full text-sm text-white">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic text-white">Passwort</label>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Passwort</label>
                     <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
                         <i class="fas fa-key text-blue-500 mr-3"></i>
                         <input type="password" id="auth-pass" class="bg-transparent border-none outline-none w-full text-sm text-white">
@@ -123,14 +125,14 @@
                 <div class="flex items-center space-x-8">
                     <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
                     <div class="flex space-x-4">
-                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition"><i class="fas fa-columns mr-1"></i> Dashboard</button>
+                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition text-white"><i class="fas fa-columns mr-1"></i> Dashboard</button>
                         <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase"><i class="fas fa-plus-circle mr-1"></i> Akte Erstellen</button>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-6">
                     <button onclick="openChangelog()" class="text-[11px] font-black text-green-500 hover:text-green-400 transition bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
-                        v1.0.0
+                        v1.1.0
                     </button>
                     <div class="relative">
                         <button onclick="document.getElementById('profile-menu').classList.toggle('hidden')" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
@@ -154,8 +156,7 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div class="flex items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl w-full max-w-md">
                         <i class="fas fa-search text-zinc-500 mr-3 ml-2"></i>
-                        <input type="text" id="search-input" placeholder="Name eingeben..." class="bg-transparent border-none outline-none w-full text-sm text-white">
-                        <button onclick="renderDashboard()" class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-500 transition ml-2">Suchen</button>
+                        <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Name eingeben..." class="bg-transparent border-none outline-none w-full text-sm text-white">
                     </div>
                     <div class="relative">
                         <select id="prio-filter" onchange="renderDashboard()" class="bg-zinc-900 border border-zinc-800 text-white text-[10px] font-black uppercase px-4 py-3 rounded-xl outline-none cursor-pointer hover:border-zinc-600 transition appearance-none min-w-[140px]">
@@ -164,9 +165,6 @@
                             <option value="Schwer">Priorität: Schwer</option>
                             <option value="Kritisch">Priorität: Kritisch</option>
                         </select>
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500 text-[10px]">
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
                     </div>
                 </div>
 
@@ -174,7 +172,7 @@
                     <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
                     <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Datenbank Einträge</h3>
+                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Globale Datenbank</h3>
                 <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
@@ -183,13 +181,12 @@
                 <div class="space-y-4">
                     <input type="text" id="akte-title" placeholder="Titel der Akte" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500 text-white">
                     <textarea id="akte-stammdaten" placeholder="Stammdaten / Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500 text-white"></textarea>
-                    <label class="block text-[10px] font-bold text-zinc-500 uppercase italic mb-[-10px]">Prioritätsstufe</label>
                     <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase outline-none focus:border-blue-500 text-white">
                         <option value="Leicht">Leicht</option>
                         <option value="Schwer">Schwer</option>
                         <option value="Kritisch">Kritisch</option>
                     </select>
-                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">Akte Sichern</button>
+                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">In Global-DB Sichern</button>
                 </div>
             </div>
 
@@ -225,64 +222,26 @@
     </div>
 
     <script>
+        // FIREBASE KONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOb5MW38F-Fa7izcp9mwirWf7Slv88WR8",
+            authDomain: "agentdb-1d51c.firebaseapp.com",
+            projectId: "agentdb-1d51c",
+            storageBucket: "agentdb-1d51c.firebasestorage.app",
+            messagingSenderId: "883419188103",
+            appId: "1:883419188103:web:045744479f338ec51ea122"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         let currentUser = JSON.parse(localStorage.getItem('logged_in_user')) || null;
-        let akten = JSON.parse(localStorage.getItem('akten')) || [];
+        let globalAkten = [];
         let authMode = 'register';
         let activeAkteId = null;
 
         window.onload = () => { if(currentUser) loginSuccess(); };
 
-        function openChangelog() {
-            const el = document.getElementById('changelog-overlay');
-            el.style.display = 'flex';
-            el.classList.remove('fade-out');
-            el.classList.add('fade-in');
-        }
-
-        function closeChangelog() {
-            const el = document.getElementById('changelog-overlay');
-            el.classList.add('fade-out');
-            setTimeout(() => { el.style.display = 'none'; }, 300);
-        }
-
-        function renderDashboard() {
-            const list = document.getElementById('akte-list');
-            const favList = document.getElementById('fav-list');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const filter = document.getElementById('prio-filter').value;
-            
-            list.innerHTML = ""; favList.innerHTML = "";
-            let foundCount = 0;
-
-            akten.forEach(a => {
-                const matchesSearch = a.title.toLowerCase().includes(search);
-                const matchesFilter = filter === 'All' || a.prio === filter;
-
-                if(matchesSearch && matchesFilter) {
-                    foundCount++;
-                    const isFav = currentUser.favorites && currentUser.favorites.includes(a.id);
-                    const card = `
-                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic text-zinc-500">PUBLIC</span>
-                            <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : (a.prio === 'Schwer' ? 'text-yellow-500' : 'text-green-500')}"><i class="fas fa-exclamation-triangle mr-1"></i> ${a.prio}</span>
-                        </div>
-                        <h4 class="font-black text-xl mb-2 italic uppercase tracking-tighter text-white">${a.title}</h4>
-                        <p class="text-xs text-zinc-500 mb-6 line-clamp-2">${a.stammdaten}</p>
-                        <button onclick="openAkte(${a.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition uppercase">Akte Öffnen</button>
-                    </div>`;
-                    if(isFav) favList.innerHTML += card;
-                    list.innerHTML += card;
-                }
-            });
-
-            if(foundCount === 0) {
-                list.innerHTML = `<div class="col-span-full py-20 text-center fade-in text-zinc-600 uppercase font-black text-xs tracking-widest">Keine passenden Einträge gefunden.</div>`;
-            }
-            document.getElementById('fav-section').classList.toggle('hidden', !currentUser.favorites || currentUser.favorites.length === 0);
-        }
-
-        // Rest of the login, save, and detail functions
         function setAuthMode(mode) {
             authMode = mode;
             document.getElementById('auth-title').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
@@ -293,8 +252,8 @@
             const user = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
             if(!user || !pass) return alert("Eingaben fehlen!");
+
             if(authMode === 'register') {
-                if(localStorage.getItem(`user_${user}`)) return alert("Name vergeben!");
                 const newUser = {
                     name: user, pass: pass,
                     id: 'PDB-' + Math.floor(1000 + Math.random() * 8999),
@@ -318,53 +277,72 @@
             document.getElementById('nav-username').innerText = currentUser.name;
             document.getElementById('nav-avatar').src = currentUser.avatar;
             document.getElementById('welcome-msg').innerHTML = `<i class="fas fa-terminal mr-3 text-blue-500"></i>Willkommen, Agent ${currentUser.name}`;
-            renderDashboard();
+            listenToCloud();
         }
 
-        function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${viewId}`).classList.remove('hidden');
-            document.getElementById('profile-menu').classList.add('hidden');
-            if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'create-akte' && !activeAkteId) resetForm();
+        function listenToCloud() {
+            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                globalAkten = [];
+                snapshot.forEach(doc => {
+                    globalAkten.push({ cloudId: doc.id, ...doc.data() });
+                });
+                renderDashboard();
+            });
         }
 
-        function resetForm() {
-            activeAkteId = null;
-            document.getElementById('form-title').innerText = "Akte Registrieren";
-            document.getElementById('akte-title').value = "";
-            document.getElementById('akte-stammdaten').value = "";
-            document.getElementById('akte-prio').value = "Leicht";
+        function renderDashboard() {
+            const list = document.getElementById('akte-list');
+            const favList = document.getElementById('fav-list');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const filter = document.getElementById('prio-filter').value;
+            
+            list.innerHTML = ""; favList.innerHTML = "";
+            
+            globalAkten.forEach(a => {
+                const matchesSearch = a.title.toLowerCase().includes(search);
+                const matchesFilter = filter === 'All' || a.prio === filter;
+
+                if(matchesSearch && matchesFilter) {
+                    const isFav = currentUser.favorites && currentUser.favorites.includes(a.cloudId);
+                    const card = `
+                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 uppercase italic text-zinc-500">GLOBAL</span>
+                            <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : (a.prio === 'Schwer' ? 'text-yellow-500' : 'text-green-500')}"><i class="fas fa-exclamation-triangle mr-1"></i> ${a.prio}</span>
+                        </div>
+                        <h4 class="font-black text-xl mb-2 italic uppercase tracking-tighter text-white">${a.title}</h4>
+                        <p class="text-[9px] text-zinc-600 mb-4 uppercase">Von: ${a.creator}</p>
+                        <button onclick="openAkte('${a.cloudId}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black tracking-widest transition uppercase">Akte Öffnen</button>
+                    </div>`;
+                    if(isFav) favList.innerHTML += card;
+                    list.innerHTML += card;
+                }
+            });
+            document.getElementById('fav-section').classList.toggle('hidden', favList.innerHTML === "");
         }
 
         function saveAkte() {
             const title = document.getElementById('akte-title').value;
+            const stammdaten = document.getElementById('akte-stammdaten').value;
+            const prio = document.getElementById('akte-prio').value;
             if(!title) return alert("Titel fehlt!");
-            if(activeAkteId) {
-                const index = akten.findIndex(a => a.id === activeAkteId);
-                if(index !== -1) {
-                    akten[index].title = title;
-                    akten[index].stammdaten = document.getElementById('akte-stammdaten').value;
-                    akten[index].prio = document.getElementById('akte-prio').value;
-                }
-            } else {
-                akten.push({
-                    id: Date.now(), title: title,
-                    stammdaten: document.getElementById('akte-stammdaten').value,
-                    prio: document.getElementById('akte-prio').value,
-                    creator: currentUser.name, createdDate: new Date().toLocaleDateString(),
-                    entries: []
-                });
-            }
-            localStorage.setItem('akten', JSON.stringify(akten));
-            activeAkteId = null; showView('dashboard');
+
+            db.collection("global_akten").add({
+                title, stammdaten, prio,
+                creator: currentUser.name,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                entries: []
+            }).then(() => {
+                showView('dashboard');
+                document.getElementById('akte-title').value = "";
+                document.getElementById('akte-stammdaten').value = "";
+            });
         }
 
         function openAkte(id) {
-            const akte = akten.find(a => a.id === id);
+            const akte = globalAkten.find(a => a.cloudId === id);
             if(!akte) return;
             activeAkteId = id; showView('details');
-            const isAdmin = currentUser.name === "Zynox";
             const isCreator = akte.creator === currentUser.name;
             const isFav = currentUser.favorites && currentUser.favorites.includes(id);
 
@@ -374,76 +352,55 @@
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-3xl font-black uppercase italic tracking-tighter text-white">${akte.title}</h2>
-                                <span class="text-xs font-bold text-zinc-500"><i class="fas fa-calendar-alt mr-2"></i>${akte.createdDate}</span>
+                                <span class="text-xs font-bold text-zinc-500">GLOBAL CASE</span>
                             </div>
                             <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase italic">Sachverhalt</p>
                             <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300">${akte.stammdaten}</div>
                         </div>
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <h3 class="text-xs font-black mb-6 uppercase italic text-white"><i class="fas fa-plus-square mr-2 text-blue-500"></i> Neuen Eintrag Hinzufügen</h3>
+                            <h3 class="text-xs font-black mb-6 uppercase italic text-white"><i class="fas fa-plus-square mr-2 text-blue-500"></i> Eintrag Hinzufügen</h3>
                             <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm mb-4 outline-none focus:border-blue-500 text-white" placeholder="Ereignis eingeben..."></textarea>
                             <div class="flex items-center justify-between">
                                 <input type="file" id="entry-file" class="text-[10px] text-zinc-500">
-                                <button onclick="addEntry(${id})" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Eintrag Sichern</button>
+                                <button onclick="addEntry('${id}')" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Sichern</button>
                             </div>
                         </div>
                         <div class="space-y-4">
-                            ${akte.entries.map((e, i) => `
+                            ${akte.entries ? akte.entries.map((e, i) => `
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
-                                    <div class="flex justify-between mb-2">
-                                        <p class="text-[10px] font-black text-blue-400 uppercase"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
-                                        ${(isAdmin || isCreator || e.author === currentUser.name) ? `<button onclick="deleteEntry(${id}, ${i})" class="text-red-500 hover:text-red-400 transition"><i class="fas fa-trash"></i></button>` : ''}
-                                    </div>
+                                    <p class="text-[10px] font-black text-blue-400 uppercase mb-2"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
-                                    ${e.file ? `
-                                        <div class="mt-6">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <div class="flex items-center">
-                                                    <div class="w-[3px] h-4 bg-blue-600 mr-2 rounded-full"></div>
-                                                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest italic">Beweismittel:</p>
-                                                </div>
-                                                <button onclick="downloadImage('${e.file}', 'BEWEIS_${akte.title.replace(/\s+/g, '_')}_${i}')" class="text-[9px] font-bold border border-zinc-700 px-2 py-1 rounded hover:bg-white hover:text-black transition">
-                                                    <i class="fas fa-download mr-1"></i> DOWNLOAD
-                                                </button>
-                                            </div>
-                                            <img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview shadow-xl">
-                                        </div>` : ''}
-                                </div>`).join('')}
+                                    ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview">` : ''}
+                                </div>`).join('') : ''}
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-                            <p class="text-xs mb-4 uppercase text-zinc-400"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
-                            <div class="space-y-3">
-                                ${isCreator ? `<button onclick="editAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-purple-500/20 text-purple-500 hover:bg-purple-500 hover:text-white transition uppercase"><i class="fas fa-edit mr-2"></i>Bearbeiten</button>` : ''}
-                                <button onclick="toggleFav(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>${isFav ? 'Gemerkt' : 'Favorisieren'}</button>
-                                ${(isAdmin || isCreator) ? `<button onclick="deleteAkte(${id})" class="w-full p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition uppercase"><i class="fas fa-trash-alt mr-2"></i>Löschen</button>` : ''}
-                            </div>
+                        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl text-white">
+                            <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
+                            <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit</button>
+                            ${isCreator ? `<button onclick="deleteAkte('${id}')" class="w-full mt-2 p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition uppercase">Löschen</button>` : ''}
                         </div>
                     </div>
                 </div>`;
         }
 
-        function downloadImage(dataUrl, name) {
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = name + '.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
             const file = document.getElementById('entry-file').files[0];
-            if(!text && !file) return;
-            const akte = akten.find(a => a.id === id);
-            const save = (data) => {
-                akte.entries.unshift({ author: currentUser.name, text, file: data });
-                localStorage.setItem('akten', JSON.stringify(akten)); openAkte(id);
+            const akte = globalAkten.find(a => a.cloudId === id);
+            
+            const pushToCloud = (dataUrl) => {
+                const newEntries = akte.entries || [];
+                newEntries.unshift({ author: currentUser.name, text, file: dataUrl });
+                db.collection("global_akten").doc(id).update({ entries: newEntries })
+                .then(() => openAkte(id));
             };
-            if(file) { const r = new FileReader(); r.onload = (e) => save(e.target.result); r.readAsDataURL(file); }
-            else save(null);
+
+            if(file) {
+                const r = new FileReader();
+                r.onload = (e) => pushToCloud(e.target.result);
+                r.readAsDataURL(file);
+            } else { pushToCloud(null); }
         }
 
         function toggleFav(id) {
@@ -454,20 +411,15 @@
             openAkte(id);
         }
 
-        function editAkte(id) {
-            const a = akten.find(x => x.id === id);
-            activeAkteId = id; showView('create-akte');
-            document.getElementById('form-title').innerText = "AKTE BEARBEITEN";
-            document.getElementById('akte-title').value = a.title;
-            document.getElementById('akte-stammdaten').value = a.stammdaten;
-            document.getElementById('akte-prio').value = a.prio;
-        }
-
-        function deleteAkte(id) { if(confirm("Akte vernichten?")) { akten = akten.filter(a => a.id !== id); localStorage.setItem('akten', JSON.stringify(akten)); showView('dashboard'); } }
-        function deleteEntry(aid, i) { if(confirm("Eintrag entfernen?")) { akten.find(a => a.id === aid).entries.splice(i, 1); localStorage.setItem('akten', JSON.stringify(akten)); openAkte(aid); } }
+        function deleteAkte(id) { if(confirm("Akte vernichten?")) { db.collection("global_akten").doc(id).delete().then(() => showView('dashboard')); } }
         function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
         function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
-
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+        }
+        function openChangelog() { document.getElementById('changelog-overlay').style.display = 'flex'; }
+        function closeChangelog() { document.getElementById('changelog-overlay').style.display = 'none'; }
         function showDienstausweis() {
             document.getElementById('modal-id').classList.remove('hidden');
             document.getElementById('card-name').innerText = currentUser.name;
@@ -476,7 +428,6 @@
             document.getElementById('card-avatar').src = currentUser.avatar;
             document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
         }
-
         function saveSettings() {
             const file = document.getElementById('set-avatar-file').files[0];
             const color = document.getElementById('set-card-color').value;
@@ -485,7 +436,7 @@
                 currentUser.cardColor = color;
                 localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
                 localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
-                loginSuccess();
+                location.reload();
             };
             if(file) { const r = new FileReader(); r.onload = (e) => update(e.target.result); r.readAsDataURL(file); }
             else update(null);
