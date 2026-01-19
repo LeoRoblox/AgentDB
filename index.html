@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGENTDB - Systemzugriff</title>
+    <title>AGENTDB - Full System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -11,93 +11,77 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
+        
+        /* Altes Login Design */
+        .login-container { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input-old { background: #000; border: 1px solid #222; color: #fff; padding: 12px; width: 100%; outline: none; margin-bottom: 15px; font-size: 13px; }
+        .btn-old { background: #fff; color: #000; font-weight: 900; text-transform: uppercase; padding: 12px; width: 100%; font-size: 11px; transition: 0.2s; }
+        .btn-old:hover { background: #3b82f6; color: #fff; }
 
-        body { background-color: #050505; color: #f4f4f4; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #changelog-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(12px); background: rgba(0,0,0,0.8); }
-        .changelog-frame { background: #0a0a0a; border: 1px solid #1a1a1a; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-        .hidden { display: none; }
-        .terminal-text { font-family: 'Fira Code', monospace; }
+        /* Navbar Icons & Text */
+        .nav-link { font-size: 11px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .nav-link:hover { color: #3b82f6; }
+
+        /* Akten Karten */
+        .akte-card { background: #050505; border: 1px solid #1a1a1a; padding: 25px; position: relative; }
+        .badge { font-size: 9px; font-weight: 900; color: #3b82f6; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-    <div id="changelog-overlay" class="p-4">
-        <div class="changelog-frame w-full max-w-xl rounded-lg overflow-hidden border border-green-900/30">
-            <div class="bg-black border-b border-zinc-800 p-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-green-500/10 p-2 rounded border border-green-500/20">
-                         <i class="fas fa-terminal text-green-500 text-sm"></i>
-                    </div>
-                    <h2 class="text-green-500 font-black italic tracking-tighter text-lg uppercase">SYSTEM CHANGELOG</h2>
-                </div>
-                <button onclick="closeChangelog()" class="text-zinc-500 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800">
-                    <i class="fas fa-times"></i>
+    <div id="auth-screen" class="flex items-center justify-center min-h-screen p-4">
+        <div class="login-container">
+            <h2 class="text-2xl font-black italic uppercase mb-8 tracking-tighter text-center">Systemzugriff</h2>
+            <input type="text" id="username" placeholder="AGENT NAME" class="input-old">
+            <input type="password" id="password" placeholder="PASSWORT" class="input-old">
+            <button onclick="login()" class="btn-old">Initialisieren</button>
+        </div>
+    </div>
+
+    <div id="main-ui" class="hidden">
+        <nav class="flex justify-between items-center px-8 py-6 bg-black border-b border-zinc-900 sticky top-0 z-50">
+            <div class="text-xl font-black italic tracking-tighter uppercase">
+                AGENT<span class="text-blue-600">DB</span>
+            </div>
+            <div class="flex gap-8 items-center">
+                <span onclick="showPage('dashboard')" class="nav-link">Dashboard</span>
+                <span onclick="showPage('create')" class="nav-link">Neue Akte</span>
+                <button onclick="location.reload()" class="text-red-600 hover:text-red-400">
+                    <i class="fas fa-power-off"></i>
                 </button>
-            </div>
-            <div class="p-6">
-                <div class="border border-green-500/20 bg-green-500/5 p-4 rounded-lg">
-                    <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.1.0 - GLOBAL UPDATE</span>
-                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">NETZWERK AKTIVIERT</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed terminal-text">
-                        Das System ist nun mit der Globalen Cloud verbunden. Alle erstellten Akten sind sofort für alle autorisierten Agenten im Netzwerk sichtbar.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="auth-screen" class="flex items-center justify-center min-h-screen p-4 fade-in">
-        <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-extrabold text-center mb-1 uppercase italic text-white">System Zugriff</h2>
-            <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em] uppercase">Authentifizierung erforderlich</p>
-            <div class="space-y-5">
-                <input type="text" id="auth-user" placeholder="Agent Name..." class="w-full bg-black border border-zinc-700 rounded-lg p-3 text-sm text-white outline-none focus:border-blue-500">
-                <button onclick="handleAuthAction()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black tracking-widest uppercase transition">Initialisieren</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="main-interface" class="hidden">
-        <nav class="bg-black/80 border-b border-zinc-800 p-4 sticky top-0 z-50 backdrop-blur-md">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-8">
-                    <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
-                    <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition">Dashboard</button>
-                    <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase">Akte Erstellen</button>
-                </div>
-                <div class="flex items-center space-x-6">
-                    <button onclick="openChangelog()" class="text-[11px] font-black text-green-500 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">v1.1.0</button>
-                    <span id="nav-username" class="text-xs font-bold uppercase text-zinc-500">AGENT</span>
-                </div>
             </div>
         </nav>
 
-        <main class="p-6 max-w-7xl mx-auto">
-            <div id="view-dashboard" class="view fade-in">
-                <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <main class="p-8 max-w-7xl mx-auto">
+            
+            <div id="page-dashboard" class="page">
+                <div id="akte-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    </div>
             </div>
 
-            <div id="view-create-akte" class="view hidden max-w-2xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
-                <h3 class="text-xl font-black mb-6 italic uppercase text-white">Akte Registrieren</h3>
-                <div class="space-y-4">
-                    <input type="text" id="akte-title" placeholder="Titel / Name" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm text-white outline-none focus:border-blue-500">
-                    <textarea id="akte-stammdaten" placeholder="Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm text-white outline-none focus:border-blue-500"></textarea>
-                    <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm text-white outline-none">
-                        <option value="Leicht">Leicht</option>
-                        <option value="Schwer">Schwer</option>
-                        <option value="Kritisch">Kritisch</option>
-                    </select>
-                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">In Global-DB Speichern</button>
+            <div id="page-create" class="page hidden">
+                <div class="max-w-2xl bg-zinc-900/30 p-8 border border-zinc-800">
+                    <h2 class="font-black italic uppercase mb-6 text-blue-500">Neue Akte registrieren</h2>
+                    <input type="text" id="new-title" placeholder="NAME / TITEL DER AKTE" class="input-old">
+                    <textarea id="new-content" rows="8" placeholder="VOLLSTÄNDIGER SACHVERHALT..." class="input-old"></textarea>
+                    <button onclick="saveAkte()" class="btn-old bg-blue-600 text-white border-none">Akte in Datenbank schreiben</button>
                 </div>
             </div>
+
+            <div id="page-details" class="page hidden">
+                <button onclick="showPage('dashboard')" class="text-[10px] font-bold uppercase mb-6 text-zinc-500 hover:text-white">← Zurück zur Übersicht</button>
+                <div id="details-content"></div>
+            </div>
+
         </main>
     </div>
 
     <script>
+        // FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyDOb5MW38F-Fa7izcp9mwirWf7Slv88WR8",
             authDomain: "agentdb-1d51c.firebaseapp.com",
@@ -106,70 +90,120 @@
             messagingSenderId: "883419188103",
             appId: "1:883419188103:web:045744479f338ec51ea122"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let currentUser = "";
 
-        function handleAuthAction() {
-            const user = document.getElementById('auth-user').value.trim();
-            if(!user) return;
-            currentUser = user;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-interface').classList.remove('hidden');
-            document.getElementById('nav-username').innerText = currentUser;
-            listenToDatabase();
+        let loggedInUser = "";
+        let currentAkten = [];
+
+        // LOGIN FUNKTION
+        function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if(user && pass) {
+                loggedInUser = user;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-ui').classList.remove('hidden');
+                loadData();
+            }
         }
 
-        function listenToDatabase() {
-            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const list = document.getElementById('akte-list');
-                list.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const a = doc.data();
-                    const prioColor = a.prio === 'Kritisch' ? 'text-red-500' : (a.prio === 'Schwer' ? 'text-yellow-500' : 'text-green-500');
-                    list.innerHTML += `
-                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black px-2 py-1 bg-black rounded border border-zinc-800 text-zinc-500 uppercase">Akte</span>
-                            <span class="text-[10px] font-black uppercase ${prioColor}">${a.prio}</span>
-                        </div>
-                        <h4 class="font-black text-xl mb-2 text-white uppercase italic">${a.title}</h4>
-                        <p class="text-[10px] text-zinc-600 mb-4 uppercase">Agent: ${a.creator}</p>
-                        <div class="bg-black/50 p-4 rounded border border-zinc-800/50 text-sm text-zinc-400 terminal-text">
-                            ${a.text}
-                        </div>
-                    </div>`;
-                });
+        // SEITEN STEUERUNG
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+        }
+
+        // DATEN AUS CLOUD LADEN
+        function loadData() {
+            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot(snap => {
+                currentAkten = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderDashboard();
             });
         }
 
-        function saveAkte() {
-            const title = document.getElementById('akte-title').value;
-            const text = document.getElementById('akte-stammdaten').value;
-            const prio = document.getElementById('akte-prio').value;
-            if(!title || !text) return;
+        function renderDashboard() {
+            const container = document.getElementById('akte-container');
+            container.innerHTML = "";
+            currentAkten.forEach(akte => {
+                container.innerHTML += `
+                    <div class="akte-card">
+                        <span class="badge">Eintrag #${akte.id.substring(0,6)}</span>
+                        <h3 class="text-lg font-black uppercase italic mb-3">${akte.title}</h3>
+                        <p class="text-zinc-500 text-xs mb-6 line-clamp-3">${akte.stammdaten || ''}</p>
+                        <button onclick="viewAkte('${akte.id}')" class="text-[10px] font-black border border-zinc-800 px-4 py-2 hover:bg-white hover:text-black w-full transition">Öffnen</button>
+                    </div>
+                `;
+            });
+        }
+
+        // AKTE DETAIL ANSICHT & KOMMENTARE
+        function viewAkte(id) {
+            const akte = currentAkten.find(a => a.id === id);
+            showPage('details');
+            const detailsDiv = document.getElementById('details-content');
+            detailsDiv.innerHTML = `
+                <div class="bg-zinc-900/50 p-8 border border-zinc-800 mb-8">
+                    <h1 class="text-3xl font-black uppercase italic mb-4">${akte.title}</h1>
+                    <p class="text-zinc-400 leading-relaxed">${akte.stammdaten}</p>
+                </div>
+                
+                <div class="space-y-4 mb-8">
+                    <h4 class="text-xs font-black uppercase text-blue-500 italic">Einsatzberichte / Kommentare</h4>
+                    <div id="comments-list" class="space-y-2">
+                        ${(akte.entries || []).map(e => `
+                            <div class="bg-black border border-zinc-900 p-4">
+                                <div class="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                    <span class="text-blue-400">${e.author}</span>
+                                    <span class="text-zinc-600">${e.date}</span>
+                                </div>
+                                <p class="text-sm">${e.text}</p>
+                            </div>
+                        `).reverse().join('')}
+                    </div>
+                </div>
+
+                <div class="bg-black border border-zinc-800 p-6">
+                    <textarea id="comment-text" placeholder="BERICHT SCHREIBEN..." class="input-old mb-2"></textarea>
+                    <button onclick="addComment('${id}')" class="btn-old bg-white text-black">Bericht absenden</button>
+                </div>
+            `;
+        }
+
+        async function addComment(id) {
+            const text = document.getElementById('comment-text').value;
+            if(!text) return;
             
-            db.collection("global_akten").add({
-                title: title,
+            const newEntry = {
+                author: loggedInUser,
                 text: text,
-                prio: prio,
-                creator: currentUser,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                showView('dashboard');
-                document.getElementById('akte-title').value = "";
-                document.getElementById('akte-stammdaten').value = "";
+                date: new Date().toLocaleString('de-DE')
+            };
+
+            await db.collection("global_akten").doc(id).update({
+                entries: firebase.firestore.FieldValue.arrayUnion(newEntry)
             });
+            
+            viewAkte(id); // Ansicht aktualisieren
         }
 
-        function showView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${id}`).classList.remove('hidden');
-        }
+        async function saveAkte() {
+            const t = document.getElementById('new-title').value;
+            const c = document.getElementById('new-content').value;
+            if(!t) return;
 
-        function openChangelog() { document.getElementById('changelog-overlay').style.display = 'flex'; }
-        function closeChangelog() { document.getElementById('changelog-overlay').style.display = 'none'; }
+            await db.collection("global_akten").add({
+                title: t,
+                stammdaten: c,
+                author: loggedInUser,
+                createdAt: new Date(),
+                entries: []
+            });
+
+            document.getElementById('new-title').value = "";
+            document.getElementById('new-content').value = "";
+            showPage('dashboard');
+        }
     </script>
 </body>
 </html>
