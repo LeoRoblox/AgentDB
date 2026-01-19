@@ -18,19 +18,19 @@
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .fade-out { animation: fadeOut 0.3s ease-in forwards; }
         @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
 
-        /* NEU: BEWEISMITTEL HOVER EFFEKT */
+        /* HOVER ANIMATION FÜR BILDER */
         .evidence-preview {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #333;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
         }
         .evidence-preview:hover {
             outline: 3px solid #3b82f6;
-            transform: scale(1.04);
-            cursor: pointer;
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+            transform: scale(1.03);
         }
 
         #lightbox, #changelog-overlay, #admin-overlay {
@@ -42,8 +42,15 @@
             justify-content: center;
             backdrop-filter: blur(12px);
         }
-        #lightbox { background: rgba(0,0,0,0.95); flex-direction: column; }
+
+        #lightbox { background: rgba(0,0,0,0.95); }
         #changelog-overlay, #admin-overlay { background: rgba(0,0,0,0.8); }
+
+        .changelog-frame, .admin-frame {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
 
         .agent-card {
             background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
@@ -59,48 +66,76 @@
 <body class="min-h-screen">
 
     <div id="lightbox">
-        <div class="absolute top-6 right-6 flex space-x-4">
-            <a id="download-btn" href="#" download="Beweismittel.png" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-black text-xs uppercase transition flex items-center">
-                <i class="fas fa-download mr-2"></i> Beweis Sichern
+        <div class="absolute top-6 right-6 flex items-center space-x-6">
+            <a id="download-link" href="#" download="Beweismittel.png" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition flex items-center">
+                <i class="fas fa-download mr-2"></i> Beweis Downloaden
             </a>
-            <button onclick="document.getElementById('lightbox').style.display='none'" class="text-white text-5xl hover:text-red-500 transition">&times;</button>
+            <button onclick="document.getElementById('lightbox').style.display='none'" class="text-white text-5xl hover:text-blue-500 transition">&times;</button>
         </div>
-        <img id="lightbox-img" src="" class="max-w-[85%] max-h-[85%] object-contain rounded-lg border border-zinc-800">
+        <img id="lightbox-img" src="" class="max-w-[90%] max-h-[90%] object-contain shadow-2xl">
     </div>
 
     <div id="admin-overlay" class="p-4">
-        <div id="admin-frame" class="w-full max-w-xl bg-[#0a0a0a] rounded-lg overflow-hidden border border-red-900/30">
+        <div id="admin-frame" class="admin-frame w-full max-w-xl rounded-lg overflow-hidden border border-red-900/30">
             <div class="bg-black border-b border-zinc-800 p-4 flex items-center justify-between">
-                <h2 class="text-red-500 font-black uppercase italic">Administrator Panel</h2>
-                <button onclick="closeAdmin()" class="text-zinc-500 hover:text-white"><i class="fas fa-times"></i></button>
+                <div class="flex items-center space-x-3">
+                    <div class="bg-red-500/10 p-2 rounded border border-red-500/20"><i class="fas fa-shield-halved text-red-500 text-sm"></i></div>
+                    <h2 class="text-red-500 font-black italic tracking-tighter text-lg uppercase">Administrator Panel</h2>
+                </div>
+                <button onclick="closeAdmin()" class="text-zinc-500 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-6">
-                <button onclick="deleteAllAkten()" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/30 py-4 rounded-xl font-black text-[10px] uppercase transition">Alle Akten vernichten</button>
-                <div id="ban-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                <button onclick="deleteAllAkten()" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/30 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition">
+                    <i class="fas fa-trash-alt mr-2"></i> Alle Akten in Cloud vernichten
+                </button>
+                <div class="border-t border-zinc-800 pt-4">
+                    <h3 class="text-white text-xs font-black uppercase mb-4 italic">Gesperrte Agenten (IP-Bann)</h3>
+                    <div id="ban-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="changelog-overlay" class="p-4">
-        <div id="changelog-frame" class="w-full max-w-xl bg-[#0a0a0a] rounded-lg overflow-hidden border border-green-900/30">
+        <div id="changelog-frame" class="changelog-frame w-full max-w-xl rounded-lg overflow-hidden border border-green-900/30">
             <div class="bg-black border-b border-zinc-800 p-4 flex items-center justify-between">
-                <h2 class="text-green-500 font-black uppercase italic">System Changelog</h2>
-                <button onclick="closeChangelog()" class="text-zinc-500 hover:text-white"><i class="fas fa-times"></i></button>
+                <div class="flex items-center space-x-3">
+                    <div class="bg-green-500/10 p-2 rounded border border-green-500/20"><i class="fas fa-terminal text-green-500 text-sm"></i></div>
+                    <h2 class="text-green-500 font-black italic tracking-tighter text-lg uppercase">SYSTEM CHANGELOG</h2>
+                </div>
+                <button onclick="closeChangelog()" class="text-zinc-500 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-6">
-                <p class="text-zinc-400 text-sm terminal-text">v1.2.0 - Beweismittel-Update aktiv. Bilder können nun hochgeladen, vergrößert und heruntergeladen werden.</p>
+            <div class="p-6 space-y-4">
+                <div class="border border-green-500/20 bg-green-500/5 p-4 rounded-lg">
+                    <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.2.0 - MEDIA UPDATE</span>
+                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">BILDER AKTIVIERT</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed terminal-text">Beweismittel können nun Berichten hinzugefügt werden. Inklusive Hover-Animation und Download-Option.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="auth-screen" class="flex items-center justify-center min-h-screen p-4 fade-in">
-        <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl">
-            <h2 id="auth-title" class="text-2xl font-black text-center mb-1 uppercase italic text-white">Zugriffsberechtigung</h2>
-            <p class="text-[10px] text-zinc-500 text-center mb-8 uppercase tracking-widest">Global Agent Database</p>
-            <div class="space-y-4">
-                <input type="text" id="auth-user" placeholder="Agent Name..." class="w-full bg-black border border-zinc-700 rounded-lg p-3 text-sm text-white outline-none">
-                <input type="password" id="auth-pass" placeholder="Passwort" class="w-full bg-black border border-zinc-700 rounded-lg p-3 text-sm text-white outline-none">
-                <button onclick="handleAuthAction()" class="w-full bg-white text-black py-4 rounded-lg text-xs font-black uppercase tracking-widest">Login / Register</button>
+        <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-2xl">
+            <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-1 uppercase italic text-white">Account Erstellen</h2>
+            <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em] uppercase">Authentifizierung erforderlich</p>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Benutzername</label>
+                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
+                        <i class="fas fa-user text-purple-500 mr-3"></i>
+                        <input type="text" id="auth-user" placeholder="Agent Name..." class="bg-transparent border-none outline-none w-full text-sm text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Passwort</label>
+                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
+                        <i class="fas fa-key text-blue-500 mr-3"></i>
+                        <input type="password" id="auth-pass" class="bg-transparent border-none outline-none w-full text-sm text-white">
+                    </div>
+                </div>
+                <button id="auth-btn" onclick="handleAuthAction()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black tracking-widest uppercase transition">Account Erstellen</button>
+                <p id="auth-toggle-text" class="text-center text-xs text-zinc-500">Schon registriert? <a href="#" onclick="setAuthMode('login')" class="text-blue-400 font-bold">Hier einloggen.</a></p>
             </div>
         </div>
     </div>
@@ -110,66 +145,94 @@
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center space-x-8">
                     <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
-                    <div class="flex space-x-6">
-                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase text-white hover:text-blue-500">Dashboard</button>
-                        <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 uppercase">Akte Erstellen</button>
+                    <div class="flex space-x-4">
+                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition text-white"><i class="fas fa-columns mr-1"></i> Dashboard</button>
+                        <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase"><i class="fas fa-plus-circle mr-1"></i> Akte Erstellen</button>
+                        <button id="admin-nav-btn" onclick="openAdmin()" class="hidden text-xs font-bold text-red-500 hover:bg-red-500/10 px-2 py-1 rounded transition uppercase"><i class="fas fa-shield-halved mr-1 text-red-500"></i> Administrator</button>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="openChangelog()" class="text-[10px] text-green-500 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">v1.2.0</button>
-                    <button id="admin-nav-btn" onclick="openAdmin()" class="hidden text-xs font-bold text-red-500 uppercase">Admin</button>
-                    <button onclick="showDienstausweis()" class="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
-                        <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover">
-                        <span id="nav-username" class="text-xs font-bold text-white uppercase"></span>
-                    </button>
-                    <button onclick="logout()" class="text-red-500 text-xs font-bold"><i class="fas fa-power-off"></i></button>
+                <div class="flex items-center space-x-6">
+                    <button onclick="openChangelog()" class="text-[11px] font-black text-green-500 hover:text-green-400 transition bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">v1.2.0</button>
+                    <div class="relative">
+                        <button onclick="document.getElementById('profile-menu').classList.toggle('hidden')" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
+                            <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover">
+                            <span id="nav-username" class="text-xs font-bold uppercase tracking-widest text-white">AGENT</span>
+                        </button>
+                        <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
+                            <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center text-white"><i class="fas fa-cog mr-3"></i> Einstellungen</button>
+                            <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center text-white"><i class="fas fa-id-card mr-3"></i> Dienstausweis</button>
+                            <button onclick="logout()" class="w-full text-left p-4 text-xs font-bold hover:bg-red-500/10 text-red-500 flex items-center border-t border-zinc-800"><i class="fas fa-sign-out-alt mr-3"></i> Abmelden</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </nav>
 
         <main class="p-6 max-w-7xl mx-auto">
+            <h2 id="welcome-msg" class="text-3xl font-black mb-8 italic uppercase text-white">WILLKOMMEN</h2>
             <div id="view-dashboard" class="view">
-                <div class="mb-8 flex gap-4">
-                    <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Suche..." class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm text-white w-full max-w-md outline-none">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div class="flex items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl w-full max-w-md">
+                        <i class="fas fa-search text-zinc-500 mr-3 ml-2"></i>
+                        <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Name eingeben..." class="bg-transparent border-none outline-none w-full text-sm text-white">
+                    </div>
+                    <select id="prio-filter" onchange="renderDashboard()" class="bg-zinc-900 border border-zinc-800 text-white text-[10px] font-black uppercase px-4 py-3 rounded-xl outline-none cursor-pointer">
+                        <option value="All">Priorität: Alle</option>
+                        <option value="Leicht">Priorität: Leicht</option>
+                        <option value="Schwer">Priorität: Schwer</option>
+                        <option value="Kritisch">Priorität: Kritisch</option>
+                    </select>
                 </div>
                 <div id="fav-section" class="mb-10 hidden">
-                    <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Favoriten</h3>
-                    <div id="fav-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                    <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
+                    <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-database mr-2"></i> Datenbank</h3>
-                <div id="akte-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Globale Datenbank</h3>
+                <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
             <div id="view-create-akte" class="view hidden max-w-2xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
-                <h3 class="text-xl font-black mb-6 uppercase text-white italic">Akte Registrieren</h3>
+                <h3 id="form-title" class="text-xl font-black mb-6 italic uppercase text-white">Akte Registrieren</h3>
                 <div class="space-y-4">
-                    <input type="text" id="akte-title" placeholder="Titel" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white outline-none">
-                    <textarea id="akte-stammdaten" placeholder="Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white outline-none"></textarea>
-                    <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white outline-none">
+                    <input type="text" id="akte-title" placeholder="Titel der Akte" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500 text-white">
+                    <textarea id="akte-stammdaten" placeholder="Stammdaten / Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none focus:border-blue-500 text-white"></textarea>
+                    <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase outline-none focus:border-blue-500 text-white">
                         <option value="Leicht">Leicht</option>
                         <option value="Schwer">Schwer</option>
                         <option value="Kritisch">Kritisch</option>
                     </select>
-                    <button onclick="saveAkte()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-white tracking-widest">In Cloud Speichern</button>
+                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">In Global-DB Sichern</button>
                 </div>
             </div>
 
             <div id="view-details" class="view hidden"><div id="details-content"></div></div>
+
+            <div id="view-settings" class="view hidden max-w-xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+                <h3 class="font-black mb-6 uppercase italic text-white"><i class="fas fa-user-cog mr-2"></i> Profil</h3>
+                <div class="space-y-4">
+                    <input type="file" id="set-avatar-file" accept="image/*" class="w-full bg-black border border-zinc-800 p-3 rounded text-xs text-white" onchange="previewAvatar(this)">
+                    <input type="color" id="set-card-color" class="w-full h-10 bg-black border border-zinc-800 rounded">
+                    <button onclick="saveSettings()" class="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase hover:bg-zinc-200 transition">Sichern</button>
+                </div>
+            </div>
         </main>
     </div>
 
     <div id="modal-id" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
         <div id="id-card-frame" class="agent-card w-full max-w-md p-8 border-r-8 relative shadow-2xl">
-            <h2 id="card-name" class="text-4xl font-black uppercase mb-6 italic text-white tracking-tighter"></h2>
+            <p class="text-[9px] text-zinc-400 font-black tracking-widest mb-1">AGENTDB IDENTITY</p>
+            <h2 id="card-name" class="text-4xl font-black uppercase mb-6 italic tracking-tighter text-white">NAME</h2>
             <div class="space-y-2 text-xs text-zinc-300">
-                <p><span class="text-zinc-500 font-bold uppercase mr-2">ID:</span> <span id="card-id" class="text-blue-400 font-mono"></span></p>
-                <p><span class="text-zinc-500 font-bold uppercase mr-2">ZUGRIFF:</span> LEVEL 4</p>
+                <p><span class="text-zinc-500 font-bold uppercase mr-2">ID:</span> <span id="card-id" class="font-mono text-blue-400">PDB-0000</span></p>
+                <p><span class="text-zinc-500 font-bold uppercase mr-2">Joined:</span> <span id="card-joined">01/2026</span></p>
             </div>
             <div class="mt-12 flex justify-between items-end">
-                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Official Agent ID</p>
-                <img id="card-avatar" src="" class="w-24 h-32 object-cover rounded border-2 border-zinc-700">
+                <p class="text-xs font-bold text-zinc-500 flex items-center uppercase"><i class="fas fa-shield-alt mr-2"></i> Official ID</p>
+                <div class="w-24 h-32 bg-zinc-800 border-2 rounded overflow-hidden" id="card-avatar-border">
+                    <img id="card-avatar" src="" class="w-full h-full object-cover">
+                </div>
             </div>
-            <button onclick="closeDienstausweis()" class="absolute top-4 right-4 text-zinc-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <button onclick="closeDienstausweis()" class="absolute top-4 right-4 text-zinc-600 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
         </div>
     </div>
 
@@ -182,23 +245,36 @@
             messagingSenderId: "883419188103",
             appId: "1:883419188103:web:045744479f338ec51ea122"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         let currentUser = JSON.parse(localStorage.getItem('logged_in_user')) || null;
         let globalAkten = [];
+        let authMode = 'register';
         let userIP = "Unbekannt";
-        let entryImageBase64 = "";
+        let tempAvatar = "";
+        let tempEntryImage = "";
 
         fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => userIP = d.ip);
         window.onload = () => { if(currentUser) loginSuccess(); };
+
+        function setAuthMode(mode) {
+            authMode = mode;
+            document.getElementById('auth-title').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
+            document.getElementById('auth-btn').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
+        }
 
         async function handleAuthAction() {
             const user = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
             if(!user || !pass) return;
-            currentUser = { name: user, id: 'PDB-'+Math.floor(1000+Math.random()*9000), avatar: 'https://i.imgur.com/8m5XNlE.png', favorites: [] };
+            if(authMode === 'register') {
+                currentUser = { name: user, pass: pass, id: 'PDB-' + Math.floor(1000 + Math.random() * 8999), joined: '01/2026', avatar: 'https://i.imgur.com/8m5XNlE.png', cardColor: '#3b82f6', favorites: [] };
+                localStorage.setItem(`user_${user}`, JSON.stringify(currentUser));
+            } else {
+                const stored = JSON.parse(localStorage.getItem(`user_${user}`));
+                if(stored && stored.pass === pass) currentUser = stored; else return alert("Falsch!");
+            }
             loginSuccess();
         }
 
@@ -213,26 +289,22 @@
         }
 
         function listenToCloud() {
-            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot(snap => {
-                globalAkten = snap.docs.map(doc => ({ cloudId: doc.id, ...doc.data() }));
+            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+                globalAkten = snapshot.docs.map(doc => ({ cloudId: doc.id, ...doc.data() }));
                 renderDashboard();
-                if(!document.getElementById('view-details').classList.contains('hidden')) {
-                    openAkte(document.getElementById('view-details').getAttribute('data-active-id'));
-                }
+                const det = document.getElementById('view-details');
+                if(!det.classList.contains('hidden')) openAkte(det.getAttribute('data-active-id'));
             });
         }
 
         function renderDashboard() {
             const list = document.getElementById('akte-list');
-            const search = document.getElementById('search-input').value.toLowerCase();
             list.innerHTML = "";
             globalAkten.forEach(a => {
-                if(a.title.toLowerCase().includes(search)) {
-                    list.innerHTML += `<div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-                        <h4 class="font-black text-xl mb-4 italic text-white uppercase">${a.title}</h4>
-                        <button onclick="openAkte('${a.cloudId}')" class="w-full bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase text-white">Öffnen</button>
-                    </div>`;
-                }
+                list.innerHTML += `<div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition">
+                    <h4 class="font-black text-xl mb-4 italic uppercase text-white">${a.title}</h4>
+                    <button onclick="openAkte('${a.cloudId}')" class="w-full bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase text-white">Akte Öffnen</button>
+                </div>`;
             });
         }
 
@@ -241,90 +313,70 @@
             if(!akte) return;
             showView('details');
             document.getElementById('view-details').setAttribute('data-active-id', id);
-            
             document.getElementById('details-content').innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-6">
                         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <h2 class="text-3xl font-black uppercase text-white italic mb-4">${akte.title}</h2>
-                            <p class="text-zinc-400 p-4 bg-black/40 rounded-xl border border-zinc-800">${akte.stammdaten}</p>
+                            <h2 class="text-3xl font-black uppercase text-white mb-6 italic">${akte.title}</h2>
+                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300">${akte.stammdaten}</div>
                         </div>
-
-                        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
-                            <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase italic tracking-widest">Neuen Bericht verfassen</h3>
-                            <textarea id="entry-text" placeholder="Details..." rows="3" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white mb-4 outline-none focus:border-blue-500"></textarea>
+                        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
+                            <h3 class="text-white text-xs font-black uppercase mb-4 italic">Bericht hinzufügen</h3>
+                            <textarea id="entry-text" placeholder="Neue Informationen..." rows="3" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none text-white mb-4"></textarea>
                             
                             <div class="flex items-center space-x-4 mb-4">
                                 <label class="flex-1 flex items-center justify-center bg-zinc-800 border border-zinc-700 p-3 rounded-xl cursor-pointer hover:bg-zinc-700 transition">
                                     <i class="fas fa-camera mr-2 text-blue-500"></i>
-                                    <span class="text-[10px] font-black uppercase text-zinc-400">Beweismittel hochladen</span>
+                                    <span class="text-[10px] font-black uppercase text-zinc-400">Bild hinzufügen</span>
                                     <input type="file" class="hidden" accept="image/*" onchange="handleEntryImage(this)">
                                 </label>
-                                <div id="preview-indicator" class="hidden text-green-500"><i class="fas fa-check-circle"></i></div>
+                                <div id="img-status" class="hidden text-blue-500"><i class="fas fa-check-circle"></i></div>
                             </div>
-                            <button onclick="addEntry('${id}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase transition">Speichern</button>
-                        </div>
 
-                        <div class="space-y-6">
+                            <button onclick="addEntry('${id}')" class="w-full bg-blue-600 py-3 rounded-xl text-[10px] font-black uppercase text-white">Speichern</button>
+                        </div>
+                        <div class="space-y-4">
                             ${akte.entries ? akte.entries.slice().reverse().map(e => `
                                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <p class="text-blue-500 font-black text-xs uppercase italic">${e.author}</p>
-                                        <p class="text-[9px] text-zinc-600">${e.timestamp}</p>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <p class="text-[10px] font-black text-blue-400 uppercase">${e.author}</p>
+                                        <span class="text-[9px] text-zinc-600 font-mono italic">${e.timestamp}</span>
                                     </div>
-                                    <p class="text-zinc-300 text-sm mb-6">${e.text}</p>
+                                    <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.image ? `
-                                        <div class="space-y-2">
-                                            <p class="text-[10px] font-black text-blue-500 uppercase flex items-center">
-                                                <i class="fas fa-paperclip mr-2"></i> Beweismittel:
+                                        <div class="mt-4">
+                                            <p class="text-[10px] font-black text-blue-500 uppercase flex items-center mb-2">
+                                                <i class="fas fa-paperclip mr-2 text-blue-500"></i> Beweismittel:
                                             </p>
-                                            <div class="evidence-preview bg-black rounded-xl overflow-hidden p-1 shadow-2xl" onclick="viewImage('${e.image}')">
-                                                <img src="${e.image}" class="w-full h-auto max-h-[400px] object-cover rounded-lg">
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `).join('') : ''}
+                                            <img src="${e.image}" onclick="zoom('${e.image}')" class="evidence-preview w-full rounded-lg border border-zinc-800">
+                                        </div>` : ''}
+                                </div>`).join('') : ''}
                         </div>
                     </div>
-                    <div><button onclick="showView('dashboard')" class="w-full bg-zinc-800 p-4 rounded-xl text-xs font-black uppercase text-white">Zurück</button></div>
+                    <div><button onclick="showView('dashboard')" class="w-full bg-zinc-800 p-4 rounded-xl text-xs font-black uppercase">Zurück</button></div>
                 </div>`;
         }
 
         function handleEntryImage(input) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                entryImageBase64 = e.target.result;
-                document.getElementById('preview-indicator').classList.remove('hidden');
-            };
-            reader.readAsDataURL(input.files[0]);
+            const r = new FileReader();
+            r.onload = (e) => { tempEntryImage = e.target.result; document.getElementById('img-status').classList.remove('hidden'); };
+            r.readAsDataURL(input.files[0]);
         }
 
         async function addEntry(akteId) {
-            const text = document.getElementById('entry-text').value.trim();
-            if(!text && !entryImageBase64) return;
-            const akteRef = db.collection("global_akten").doc(akteId);
+            const text = document.getElementById('entry-text').value;
+            if(!text && !tempEntryImage) return;
             const akte = globalAkten.find(a => a.cloudId === akteId);
-            const newEntry = { author: currentUser.name, text, image: entryImageBase64, timestamp: new Date().toLocaleString('de-DE') };
-            await akteRef.update({ entries: [...(akte.entries || []), newEntry] });
-            entryImageBase64 = "";
+            const entry = { author: currentUser.name, text, image: tempEntryImage, timestamp: new Date().toLocaleString() };
+            await db.collection("global_akten").doc(akteId).update({ entries: [...(akte.entries || []), entry] });
+            tempEntryImage = "";
             document.getElementById('entry-text').value = "";
-            document.getElementById('preview-indicator').classList.add('hidden');
         }
 
-        function viewImage(src) {
+        function zoom(src) {
             document.getElementById('lightbox-img').src = src;
-            document.getElementById('download-btn').href = src;
+            document.getElementById('download-link').href = src;
             document.getElementById('lightbox').style.display = 'flex';
-        }
-
-        function saveAkte() {
-            const title = document.getElementById('akte-title').value;
-            const stammdaten = document.getElementById('akte-stammdaten').value;
-            const prio = document.getElementById('akte-prio').value;
-            if(!title) return;
-            db.collection("global_akten").add({ title, stammdaten, prio, creator: currentUser.name, createdAt: firebase.firestore.FieldValue.serverTimestamp(), entries: [] });
-            showView('dashboard');
         }
 
         function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.add('hidden')); document.getElementById('view-'+id).classList.remove('hidden'); }
@@ -332,14 +384,15 @@
         function closeAdmin() { document.getElementById('admin-overlay').style.display = 'none'; }
         function openChangelog() { document.getElementById('changelog-overlay').style.display = 'flex'; }
         function closeChangelog() { document.getElementById('changelog-overlay').style.display = 'none'; }
-        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
-        function showDienstausweis() { 
-            document.getElementById('card-name').innerText = currentUser.name;
-            document.getElementById('card-id').innerText = currentUser.id;
-            document.getElementById('card-avatar').src = currentUser.avatar;
-            document.getElementById('modal-id').classList.remove('hidden'); 
-        }
+        function showDienstausweis() { document.getElementById('modal-id').classList.remove('hidden'); }
         function closeDienstausweis() { document.getElementById('modal-id').classList.add('hidden'); }
+        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
+        function saveAkte() {
+            const title = document.getElementById('akte-title').value;
+            const stammdaten = document.getElementById('akte-stammdaten').value;
+            db.collection("global_akten").add({ title, stammdaten, prio: document.getElementById('akte-prio').value, creator: currentUser.name, createdAt: firebase.firestore.FieldValue.serverTimestamp(), entries: [] });
+            showView('dashboard');
+        }
     </script>
 </body>
 </html>
