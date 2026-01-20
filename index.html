@@ -70,9 +70,9 @@
         <nav class="bg-black/80 border-b border-zinc-800 p-4 sticky top-0 z-50 backdrop-blur-md">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center space-x-8">
-                    <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
+                    <span class="font-black text-2xl italic tracking-tighter text-white">AGENT<span class="text-blue-600">DB</span></span>
                     <div class="flex space-x-4">
-                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500">Dashboard</button>
+                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 text-white">Dashboard</button>
                         <button onclick="showView('create-akte')" class="text-xs font-bold text-blue-400 uppercase">Akten Erstellen</button>
                     </div>
                 </div>
@@ -82,8 +82,8 @@
                         <span id="nav-username" class="text-xs font-bold uppercase text-white">AGENT</span>
                     </button>
                     <div id="profile-menu" class="hidden absolute right-10 mt-48 w-56 bg-zinc-900 border border-zinc-800 rounded-xl z-50">
-                        <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs hover:bg-zinc-800">Dienstausweis</button>
-                        <button onclick="logout()" class="w-full text-left p-4 text-xs text-red-500 border-t border-zinc-800">Abmelden</button>
+                        <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs text-white hover:bg-zinc-800 uppercase font-bold italic">Dienstausweis</button>
+                        <button onclick="logout()" class="w-full text-left p-4 text-xs text-red-500 border-t border-zinc-800 uppercase font-bold italic">Abmelden</button>
                     </div>
                 </div>
             </div>
@@ -100,19 +100,19 @@
             </div>
 
             <div id="view-create-akte" class="view hidden max-w-2xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
-                <h3 id="form-title" class="text-xl font-black mb-6 uppercase text-white">Akte Registrieren</h3>
-                <input type="text" id="akte-title" placeholder="Titel" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-4 text-white">
-                <textarea id="akte-stammdaten" placeholder="Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-4 text-white"></textarea>
-                <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-6 text-white uppercase">
+                <h3 id="form-title" class="text-xl font-black mb-6 uppercase text-white italic">Akte Registrieren</h3>
+                <input type="text" id="akte-title" placeholder="Titel" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-4 text-white outline-none">
+                <textarea id="akte-stammdaten" placeholder="Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-4 text-white outline-none"></textarea>
+                <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-6 text-white uppercase outline-none">
                     <option value="Leicht">Leicht</option>
                     <option value="Schwer">Schwer</option>
                     <option value="Kritisch">Kritisch</option>
                 </select>
-                <button onclick="saveAkte()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase">Akte Sichern</button>
+                <button onclick="saveAkte()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-500 transition">Akte Sichern</button>
             </div>
 
             <div id="view-details" class="view hidden">
-                <button onclick="showView('dashboard')" class="mb-6 text-zinc-500 text-xs font-black uppercase">← Zurück</button>
+                <button onclick="showView('dashboard')" class="mb-6 text-zinc-500 text-xs font-black uppercase italic hover:text-white transition">← Zurück zur Übersicht</button>
                 <div id="details-content"></div>
             </div>
         </main>
@@ -122,13 +122,13 @@
         <div class="agent-card w-full max-w-md p-8 border-r-8 relative" id="card-border-render">
             <h2 id="card-name" class="text-4xl font-black uppercase italic text-white">NAME</h2>
             <p id="card-id" class="font-mono text-blue-400">ID</p>
-            <img id="card-avatar" src="" class="w-24 h-32 object-cover border-2 mt-4">
-            <button onclick="document.getElementById('modal-id').classList.add('hidden')" class="absolute top-4 right-4 text-white"><i class="fas fa-times"></i></button>
+            <img id="card-avatar" src="" class="w-24 h-32 object-cover border-2 mt-4 bg-zinc-800">
+            <button onclick="document.getElementById('modal-id').classList.add('hidden')" class="absolute top-4 right-4 text-white hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
         </div>
     </div>
 
     <script>
-        // FIREBASE KONFIGURATION
+        // --- FIREBASE KONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyDOb5MW38F-Fa7izcp9mwirWf7Slv88WR8",
             authDomain: "agentdb-1d51c.firebaseapp.com",
@@ -143,14 +143,13 @@
         let currentUser = JSON.parse(localStorage.getItem('logged_in_user')) || null;
         let allAkten = [];
         let authMode = 'register';
-        let activeAkteId = null;
 
         window.onload = () => { if(currentUser) loginSuccess(); };
 
         function setAuthMode(mode) {
             authMode = mode;
             document.getElementById('auth-title').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
-            document.getElementById('auth-btn').innerText = mode === 'register' ? "Erstellen" : "Login";
+            document.getElementById('auth-btn').innerText = mode === 'register' ? "Account Erstellen" : "Login";
         }
 
         async function handleAuthAction() {
@@ -168,14 +167,14 @@
                     id: 'PDB-' + Math.floor(1000 + Math.random() * 8999),
                     joined: new Date().toLocaleDateString('de-DE'),
                     avatar: 'https://i.imgur.com/8m5XNlE.png',
-                    cardColor: '#3b82f6', favorites: []
+                    cardColor: '#3b82f6'
                 };
                 await userRef.set(newUser);
                 currentUser = newUser; loginSuccess();
             } else {
                 if(doc.exists && doc.data().pass === pass) {
                     currentUser = doc.data(); loginSuccess();
-                } else alert("Zugriff verweigert!");
+                } else alert("Zugriff verweigert! Name oder Passwort falsch.");
             }
         }
 
@@ -193,6 +192,13 @@
             db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot(snap => {
                 allAkten = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderDashboard();
+                
+                // Falls gerade eine Akte offen ist, aktualisiere die Detail-Ansicht live
+                const detailsView = document.getElementById('view-details');
+                if(!detailsView.classList.contains('hidden')) {
+                    const activeAkte = allAkten.find(a => a.id === window.activeAkteId);
+                    if(activeAkte) renderDetails(activeAkte);
+                }
             });
         }
 
@@ -203,14 +209,14 @@
 
             allAkten.filter(a => a.title.toLowerCase().includes(search)).forEach(a => {
                 list.innerHTML += `
-                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl hover:border-blue-500 transition">
+                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl hover:border-blue-500 transition group">
                     <div class="flex justify-between mb-4">
                         <span class="text-[9px] font-black p-1 bg-black rounded text-zinc-500 uppercase">DATABASE</span>
                         <span class="text-[10px] font-black ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-green-500'} uppercase">${a.prio}</span>
                     </div>
                     <h4 class="font-black text-xl mb-2 italic uppercase text-white">${a.title}</h4>
                     <p class="text-xs text-zinc-500 mb-6 line-clamp-2">${a.stammdaten}</p>
-                    <button onclick="openAkte('${a.id}')" class="w-full bg-blue-600 text-white py-3 rounded-xl text-[10px] font-black uppercase">Akte Öffnen</button>
+                    <button onclick="openAkte('${a.id}')" class="w-full bg-blue-600 group-hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black uppercase transition">Akte Öffnen</button>
                 </div>`;
             });
         }
@@ -219,7 +225,7 @@
             const title = document.getElementById('akte-title').value;
             const text = document.getElementById('akte-stammdaten').value;
             const prio = document.getElementById('akte-prio').value;
-            if(!title) return;
+            if(!title) return alert("Bitte einen Titel angeben!");
 
             await db.collection("global_akten").add({
                 title, stammdaten: text, prio,
@@ -227,49 +233,62 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 entries: []
             });
+            
+            // Felder leeren und zurück
+            document.getElementById('akte-title').value = "";
+            document.getElementById('akte-stammdaten').value = "";
             showView('dashboard');
         }
 
         function openAkte(id) {
+            window.activeAkteId = id;
             const akte = allAkten.find(a => a.id === id);
-            activeAkteId = id;
             showView('details');
-            
+            renderDetails(akte);
+        }
+
+        function renderDetails(akte) {
             document.getElementById('details-content').innerHTML = `
-                <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl mb-6">
-                    <h2 class="text-3xl font-black uppercase italic text-white mb-4">${akte.title}</h2>
-                    <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300">${akte.stammdaten}</div>
+                <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl mb-6 fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                         <h2 class="text-3xl font-black uppercase italic text-white">${akte.title}</h2>
+                         <span class="text-xs font-black text-zinc-500 uppercase italic">Erstellt von: ${akte.creator}</span>
+                    </div>
+                    <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300 leading-relaxed">${akte.stammdaten}</div>
                 </div>
                 <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl mb-6">
-                    <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white mb-4" placeholder="Neuer Eintrag..."></textarea>
-                    <button onclick="addEntry('${id}')" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-xs font-black uppercase">Eintrag Sichern</button>
+                    <h3 class="text-xs font-black text-blue-500 uppercase mb-4 italic">Neuen Bericht hinzufügen</h3>
+                    <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-white mb-4 outline-none focus:border-blue-500 transition" placeholder="Bericht schreiben..."></textarea>
+                    <button onclick="addEntry('${akte.id}')" class="bg-blue-600 text-white px-8 py-3 rounded-xl text-xs font-black uppercase hover:bg-blue-500 transition">Bericht Sichern</button>
                 </div>
                 <div class="space-y-4">
-                    ${akte.entries.map(e => `
-                        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
-                            <p class="text-[10px] font-black text-blue-400 uppercase mb-2">${e.author} - ${e.date}</p>
-                            <p class="text-sm text-zinc-300">${e.text}</p>
+                    ${akte.entries ? akte.entries.map(e => `
+                        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in">
+                            <p class="text-[10px] font-black text-blue-400 uppercase mb-2 italic">${e.author} • ${e.date}</p>
+                            <p class="text-sm text-zinc-300 leading-relaxed">${e.text}</p>
                         </div>
-                    `).reverse().join('')}
+                    `).reverse().join('') : ''}
                 </div>`;
         }
 
         async function addEntry(id) {
-            const text = document.getElementById('entry-text').value;
+            const text = document.getElementById('entry-text').value.trim();
             if(!text) return;
+            
             await db.collection("global_akten").doc(id).update({
                 entries: firebase.firestore.FieldValue.arrayUnion({
                     author: currentUser.name,
                     text: text,
-                    date: new Date().toLocaleString()
+                    date: new Date().toLocaleString('de-DE')
                 })
             });
-            openAkte(id);
+            // Textfeld wird durch onSnapshot/renderDetails automatisch geleert
         }
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            window.scrollTo(0,0);
         }
 
         function showDienstausweis() {
