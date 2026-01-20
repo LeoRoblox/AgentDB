@@ -264,7 +264,6 @@
         let activeAkteId = null;
         let userIP = "Unbekannt";
 
-        // IP abrufen und Bann-Check
         fetch('https://api.ipify.org?format=json').then(r => r.json()).then(async d => {
             userIP = d.ip;
             const banDoc = await db.collection("banned_ips").doc(userIP).get();
@@ -290,7 +289,6 @@
             const user = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
             if(!user || !pass) return alert("Eingaben fehlen!");
-
             const banDoc = await db.collection("banned_ips").doc(userIP).get();
             if(banDoc.exists) return alert("ZUGRIFF VERWEIGERT: Deine IP wurde permanent gesperrt.");
 
@@ -318,7 +316,6 @@
             document.getElementById('nav-username').innerText = currentUser.name;
             document.getElementById('nav-avatar').src = currentUser.avatar;
             document.getElementById('welcome-msg').innerHTML = `<i class="fas fa-terminal mr-3 text-blue-500"></i>Willkommen, Agent ${currentUser.name}`;
-            
             if(currentUser.name === "Zynox") {
                 document.getElementById('admin-nav-btn').classList.remove('hidden');
                 listenToBans();
@@ -342,14 +339,7 @@
                 const list = document.getElementById('ban-list');
                 list.innerHTML = "";
                 s.forEach(doc => {
-                    list.innerHTML += `
-                    <div class="flex items-center justify-between bg-black p-3 rounded border border-red-900/20">
-                        <div>
-                            <p class="text-[10px] text-white font-bold uppercase">${doc.data().name}</p>
-                            <p class="text-[8px] text-zinc-500">${doc.id}</p>
-                        </div>
-                        <button onclick="unbanUser('${doc.id}')" class="text-xs text-red-500 hover:text-white"><i class="fas fa-unlock"></i></button>
-                    </div>`;
+                    list.innerHTML += `<div class="flex items-center justify-between bg-black p-3 rounded border border-red-900/20"><div><p class="text-[10px] text-white font-bold uppercase">${doc.data().name}</p><p class="text-[8px] text-zinc-500">${doc.id}</p></div><button onclick="unbanUser('${doc.id}')" class="text-xs text-red-500 hover:text-white"><i class="fas fa-unlock"></i></button></div>`;
                 });
             });
         }
@@ -361,10 +351,13 @@
             const filter = document.getElementById('prio-filter').value;
             list.innerHTML = ""; favList.innerHTML = "";
             
+            let foundCount = 0;
+
             globalAkten.forEach(a => {
                 const matchesSearch = a.title.toLowerCase().includes(search);
                 const matchesFilter = filter === 'All' || a.prio === filter;
                 if(matchesSearch && matchesFilter) {
+                    foundCount++;
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.cloudId);
                     const card = `
                     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
@@ -380,6 +373,18 @@
                     list.innerHTML += card;
                 }
             });
+
+            // Wenn keine Akten gefunden wurden (Empty State)
+            if(foundCount === 0) {
+                list.innerHTML = `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center text-center fade-in">
+                    <div class="bg-blue-600/10 p-6 rounded-full mb-4 border border-blue-500/20">
+                        <i class="fas fa-folder-open text-blue-500 text-5xl"></i>
+                    </div>
+                    <p class="text-zinc-500 font-bold uppercase tracking-widest text-xs italic">Bisher sind hier keine Fall-Akte.</p>
+                </div>`;
+            }
+
             document.getElementById('fav-section').classList.toggle('hidden', favList.innerHTML === "");
         }
 
@@ -388,7 +393,6 @@
             const stammdaten = document.getElementById('akte-stammdaten').value;
             const prio = document.getElementById('akte-prio').value;
             if(!title) return alert("Titel fehlt!");
-
             db.collection("global_akten").add({
                 title, stammdaten, prio,
                 creator: currentUser.name,
@@ -434,11 +438,8 @@
                                     <p class="text-[10px] font-black text-blue-400 uppercase mb-2"><i class="fas fa-user-secret mr-1"></i> ${e.author}</p>
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview">` : ''}
-                                    
                                     ${(isAkteCreator || e.author === currentUser.name || currentUser.name === "Zynox") ? `
-                                    <button onclick="deleteEntry('${id}', ${i})" class="absolute top-4 right-4 text-red-500/30 group-hover:text-red-500 transition-all">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
+                                    <button onclick="deleteEntry('${id}', ${i})" class="absolute top-4 right-4 text-red-500/30 group-hover:text-red-500 transition-all"><i class="fas fa-trash-alt"></i></button>
                                     ` : ''}
                                 </div>`).join('') : ''}
                         </div>
@@ -447,7 +448,6 @@
                         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl text-white">
                             <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
                             <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit</button>
-                            
                             ${currentUser.name === "Zynox" ? `
                             <button onclick="banCreator('${akte.creatorIP}', '${akte.creator}')" class="w-full mt-2 p-4 rounded-xl text-[10px] font-black border border-red-500/20 text-red-500 hover:bg-red-900/40 transition uppercase"><i class="fas fa-user-slash mr-2"></i>Ersteller bannen</button>
                             <button onclick="deleteAkte('${id}')" class="w-full mt-2 p-4 rounded-xl text-xs font-black bg-red-600 text-white hover:bg-red-700 transition uppercase shadow-lg shadow-red-900/20">Administrator Löschen</button>
@@ -465,10 +465,7 @@
             db.collection("global_akten").doc(akteId).update({ entries: newEntries }).then(() => openAkte(akteId));
         }
 
-        function logout() {
-            localStorage.removeItem('logged_in_user');
-            location.reload();
-        }
+        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
@@ -498,15 +495,12 @@
             }
         }
 
-        function unbanUser(ip) {
-            if(confirm(`Bann für IP ${ip} aufheben?`)) db.collection("banned_ips").doc(ip).delete();
-        }
+        function unbanUser(ip) { if(confirm(`Bann für IP ${ip} aufheben?`)) db.collection("banned_ips").doc(ip).delete(); }
 
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
             const file = document.getElementById('entry-file').files[0];
             if(!text) return alert("Text fehlt!");
-
             const pushToCloud = (dataUrl = null) => {
                 const akte = globalAkten.find(a => a.cloudId === id);
                 const newEntries = akte.entries || [];
@@ -516,7 +510,6 @@
                     document.getElementById('entry-file').value = "";
                 });
             };
-
             if(file) {
                 const reader = new FileReader();
                 reader.onload = (e) => pushToCloud(e.target.result);
@@ -524,16 +517,8 @@
             } else { pushToCloud(); }
         }
 
-        function deleteAkte(id) {
-            if(confirm("Akte permanent löschen?")) {
-                db.collection("global_akten").doc(id).delete().then(() => showView('dashboard'));
-            }
-        }
-
-        function zoomImg(src) {
-            document.getElementById('lightbox-img').src = src;
-            document.getElementById('lightbox').style.display = 'flex';
-        }
+        function deleteAkte(id) { if(confirm("Akte permanent löschen?")) { db.collection("global_akten").doc(id).delete().then(() => showView('dashboard')); } }
+        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
 
         function toggleFav(id) {
             if(!currentUser.favorites) currentUser.favorites = [];
@@ -561,10 +546,7 @@
             currentUser.cardColor = color;
             if(file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentUser.avatar = e.target.result;
-                    finishSave();
-                };
+                reader.onload = (e) => { currentUser.avatar = e.target.result; finishSave(); };
                 reader.readAsDataURL(file);
             } else { finishSave(); }
         }
