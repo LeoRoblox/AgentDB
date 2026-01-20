@@ -105,9 +105,9 @@
             <div class="p-6 space-y-4">
                 <div class="border border-green-500/20 bg-green-500/5 p-4 rounded-lg">
                     <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.1.0 - GLOBAL UPDATE</span>
-                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">NETZWERK AKTIVIERT</h3>
+                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">SYSTEM ERÖFFNET</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed terminal-text">
-                        Das System ist nun GLOBAL. Alle Akten werden in der Cloud gespeichert und sind für jeden Agenten mit dieser Datei sichtbar.
+                        Das System ist nun Aktive. Diese Website dient nicht zum Doxxing sondern dafür um eine Database mit Beweisen usw. zu haben und damit andere sehen was die Person macht.
                     </p>
                 </div>
             </div>
@@ -196,7 +196,7 @@
                     <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
                     <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> Globale Datenbank</h3>
+                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> ALLE AKTEN</h3>
                 <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
@@ -210,7 +210,7 @@
                         <option value="Schwer">Schwer</option>
                         <option value="Kritisch">Kritisch</option>
                     </select>
-                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">In Global-DB Sichern</button>
+                    <button onclick="saveAkte()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition">Akte Sichern.</button>
                 </div>
             </div>
 
@@ -445,7 +445,7 @@
                     <div class="space-y-4">
                         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl text-white">
                             <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
-                            <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit</button>
+                            <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit (comming soon.)</button>
                             
                             ${currentUser.name === "Zynox" ? `
                             <button onclick="banCreator('${akte.creatorIP}', '${akte.creator}')" class="w-full mt-2 p-4 rounded-xl text-[10px] font-black border border-red-500/20 text-red-500 hover:bg-red-900/40 transition uppercase"><i class="fas fa-user-slash mr-2"></i>Ersteller bannen</button>
