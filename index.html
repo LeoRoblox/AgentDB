@@ -264,13 +264,17 @@
         let activeAkteId = null;
         let userIP = "Unbekannt";
 
-        // IP abrufen und Bann-Check bei Reload
+        // IP abrufen und Bann-Check
         fetch('https://api.ipify.org?format=json').then(r => r.json()).then(async d => {
             userIP = d.ip;
             const banDoc = await db.collection("banned_ips").doc(userIP).get();
             if(banDoc.exists) {
-                alert("ZUGRIFF VERWEIGERT: Deine IP wurde permanent gesperrt.");
-                logout();
+                if(currentUser) {
+                    alert("ZUGRIFF VERWEIGERT: Deine IP wurde permanent gesperrt.");
+                    logout();
+                } else {
+                    document.body.innerHTML = "<div style='color:red; text-align:center; padding:50px; font-family:sans-serif;'><h1>ZUGRIFF VERWEIGERT</h1><p>Deine IP wurde permanent gesperrt.</p></div>";
+                }
             }
         });
 
@@ -287,7 +291,6 @@
             const pass = document.getElementById('auth-pass').value.trim();
             if(!user || !pass) return alert("Eingaben fehlen!");
 
-            // Check Bann
             const banDoc = await db.collection("banned_ips").doc(userIP).get();
             if(banDoc.exists) return alert("ZUGRIFF VERWEIGERT: Deine IP wurde permanent gesperrt.");
 
@@ -330,7 +333,7 @@
                     globalAkten.push({ cloudId: doc.id, ...doc.data() });
                 });
                 renderDashboard();
-                if(activeAkteId) openAkte(activeAkteId); // Refresh details if open
+                if(activeAkteId) openAkte(activeAkteId);
             });
         }
 
@@ -356,13 +359,11 @@
             const favList = document.getElementById('fav-list');
             const search = document.getElementById('search-input').value.toLowerCase();
             const filter = document.getElementById('prio-filter').value;
-            
             list.innerHTML = ""; favList.innerHTML = "";
             
             globalAkten.forEach(a => {
                 const matchesSearch = a.title.toLowerCase().includes(search);
                 const matchesFilter = filter === 'All' || a.prio === filter;
-
                 if(matchesSearch && matchesFilter) {
                     const isFav = currentUser.favorites && currentUser.favorites.includes(a.cloudId);
                     const card = `
@@ -405,7 +406,7 @@
             const akte = globalAkten.find(a => a.cloudId === id);
             if(!akte) return;
             activeAkteId = id; showView('details');
-            const isCreator = akte.creator === currentUser.name;
+            const isAkteCreator = akte.creator === currentUser.name;
             const isFav = currentUser.favorites && currentUser.favorites.includes(id);
 
             document.getElementById('details-content').innerHTML = `
@@ -434,7 +435,7 @@
                                     <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
                                     ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg border border-zinc-800 evidence-preview">` : ''}
                                     
-                                    ${(isCreator || e.author === currentUser.name) ? `
+                                    ${(isAkteCreator || e.author === currentUser.name || currentUser.name === "Zynox") ? `
                                     <button onclick="deleteEntry('${id}', ${i})" class="absolute top-4 right-4 text-red-500/30 group-hover:text-red-500 transition-all">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -445,33 +446,42 @@
                     <div class="space-y-4">
                         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl text-white">
                             <p class="text-xs mb-4 uppercase"><span class="text-zinc-500 font-bold">Ersteller:</span> ${akte.creator}</p>
-                            <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit (comming soon.)</button>
+                            <button onclick="toggleFav('${id}')" class="w-full p-4 rounded-xl text-xs font-black border border-yellow-500/20 text-yellow-500 ${isFav ? 'bg-yellow-500 text-black' : ''} transition uppercase"><i class="fas fa-star mr-2"></i>Favorit</button>
                             
                             ${currentUser.name === "Zynox" ? `
                             <button onclick="banCreator('${akte.creatorIP}', '${akte.creator}')" class="w-full mt-2 p-4 rounded-xl text-[10px] font-black border border-red-500/20 text-red-500 hover:bg-red-900/40 transition uppercase"><i class="fas fa-user-slash mr-2"></i>Ersteller bannen</button>
                             <button onclick="deleteAkte('${id}')" class="w-full mt-2 p-4 rounded-xl text-xs font-black bg-red-600 text-white hover:bg-red-700 transition uppercase shadow-lg shadow-red-900/20">Administrator Löschen</button>
-                            ` : (isCreator ? `<button onclick="deleteAkte('${id}')" class="w-full mt-2 p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition uppercase">Löschen</button>` : '')}
+                            ` : (isAkteCreator ? `<button onclick="deleteAkte('${id}')" class="w-full mt-2 p-4 rounded-xl text-xs font-black border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition uppercase">Löschen</button>` : '')}
                         </div>
                     </div>
                 </div>`;
         }
 
-        // --- NEUE LÖSCHFUNKTION FÜR BEITRÄGE ---
         function deleteEntry(akteId, entryIndex) {
             if(!confirm("Diesen Eintrag permanent löschen?")) return;
             const akte = globalAkten.find(a => a.cloudId === akteId);
             const newEntries = [...akte.entries];
             newEntries.splice(entryIndex, 1);
-            
-            db.collection("global_akten").doc(akteId).update({ entries: newEntries })
-            .then(() => openAkte(akteId));
+            db.collection("global_akten").doc(akteId).update({ entries: newEntries }).then(() => openAkte(akteId));
         }
 
-        // --- ADMIN FUNKTIONALITÄT ---
+        function logout() {
+            localStorage.removeItem('logged_in_user');
+            location.reload();
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            if(viewId !== 'details') activeAkteId = null;
+        }
+
+        function openChangelog() { document.getElementById('changelog-overlay').style.display = 'flex'; }
+        function closeChangelog() { document.getElementById('changelog-overlay').style.display = 'none'; }
         function openAdmin() { document.getElementById('admin-overlay').style.display = 'flex'; }
-        
+
         async function deleteAllAkten() {
-            if(confirm("ACHTUNG ZYNOX: Möchtest du wirklich ALLE globalen Akten löschen? Dies kann nicht rückgängig gemacht werden!")) {
+            if(confirm("ACHTUNG ZYNOX: Möchtest du wirklich ALLE globalen Akten löschen?")) {
                 const snap = await db.collection("global_akten").get();
                 const batch = db.batch();
                 snap.forEach(doc => batch.delete(doc.ref));
@@ -484,8 +494,7 @@
         function banCreator(ip, name) {
             if(!ip || ip === "Unbekannt") return alert("IP konnte nicht ermittelt werden.");
             if(confirm(`Möchtest du ${name} (${ip}) permanent aus der Datenbank aussperren?`)) {
-                db.collection("banned_ips").doc(ip).set({ name, bannedAt: new Date() })
-                .then(() => alert("Agent wurde gebannt."));
+                db.collection("banned_ips").doc(ip).set({ name, bannedAt: new Date() }).then(() => alert("Agent wurde gebannt."));
             }
         }
 
@@ -493,73 +502,77 @@
             if(confirm(`Bann für IP ${ip} aufheben?`)) db.collection("banned_ips").doc(ip).delete();
         }
 
-        // --- STANDARDFUNKTIONEN ---
         function addEntry(id) {
             const text = document.getElementById('entry-text').value;
             const file = document.getElementById('entry-file').files[0];
-            const akte = globalAkten.find(a => a.cloudId === id);
-            
-            const pushToCloud = (dataUrl) => {
+            if(!text) return alert("Text fehlt!");
+
+            const pushToCloud = (dataUrl = null) => {
+                const akte = globalAkten.find(a => a.cloudId === id);
                 const newEntries = akte.entries || [];
-                newEntries.unshift({ author: currentUser.name, text, file: dataUrl });
-                db.collection("global_akten").doc(id).update({ entries: newEntries })
-                .then(() => openAkte(id));
+                newEntries.push({ author: currentUser.name, text, file: dataUrl, date: new Date().toISOString() });
+                db.collection("global_akten").doc(id).update({ entries: newEntries }).then(() => {
+                    document.getElementById('entry-text').value = "";
+                    document.getElementById('entry-file').value = "";
+                });
             };
 
             if(file) {
-                const r = new FileReader();
-                r.onload = (e) => pushToCloud(e.target.result);
-                r.readAsDataURL(file);
-            } else { pushToCloud(null); }
+                const reader = new FileReader();
+                reader.onload = (e) => pushToCloud(e.target.result);
+                reader.readAsDataURL(file);
+            } else { pushToCloud(); }
+        }
+
+        function deleteAkte(id) {
+            if(confirm("Akte permanent löschen?")) {
+                db.collection("global_akten").doc(id).delete().then(() => showView('dashboard'));
+            }
+        }
+
+        function zoomImg(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').style.display = 'flex';
         }
 
         function toggleFav(id) {
+            if(!currentUser.favorites) currentUser.favorites = [];
             const idx = currentUser.favorites.indexOf(id);
-            if(idx > -1) currentUser.favorites.splice(idx, 1); else currentUser.favorites.push(id);
+            if(idx > -1) currentUser.favorites.splice(idx, 1);
+            else currentUser.favorites.push(id);
             localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
             localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+            renderDashboard();
             openAkte(id);
         }
-
-        function deleteAkte(id) { if(confirm("Akte vernichten?")) { db.collection("global_akten").doc(id).delete().then(() => showView('dashboard')); } }
-        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
-        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
-        
-        function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById('view-' + viewId).classList.remove('hidden');
-            if(viewId !== 'details') activeAkteId = null;
-        }
-
-        function closeChangelog() { document.getElementById('changelog-overlay').style.display = 'none'; }
-        function openChangelog() { document.getElementById('changelog-overlay').style.display = 'flex'; }
 
         function showDienstausweis() {
             document.getElementById('card-name').innerText = currentUser.name;
             document.getElementById('card-id').innerText = currentUser.id;
             document.getElementById('card-joined').innerText = currentUser.joined;
             document.getElementById('card-avatar').src = currentUser.avatar;
-            document.getElementById('card-border-render').style.borderRightColor = currentUser.cardColor;
+            document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
             document.getElementById('modal-id').classList.remove('hidden');
         }
 
         function saveSettings() {
             const file = document.getElementById('set-avatar-file').files[0];
             const color = document.getElementById('set-card-color').value;
-            
-            const finalize = (img) => {
-                currentUser.cardColor = color;
-                if(img) currentUser.avatar = img;
-                localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
-                loginSuccess();
-                alert("Profil aktualisiert.");
-            };
-
+            currentUser.cardColor = color;
             if(file) {
-                const r = new FileReader();
-                r.onload = (e) => finalize(e.target.result);
-                r.readAsDataURL(file);
-            } else finalize(null);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentUser.avatar = e.target.result;
+                    finishSave();
+                };
+                reader.readAsDataURL(file);
+            } else { finishSave(); }
+        }
+
+        function finishSave() {
+            localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
+            localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+            location.reload();
         }
     </script>
 </body>
