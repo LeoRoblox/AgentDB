@@ -19,45 +19,32 @@
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .evidence-preview:hover {
-            outline: 3px solid #3b82f6;
-            transform: scale(1.02);
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .fade-out { animation: fadeOut 0.3s ease-in forwards; }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Bounce Animation für Speichern Button */
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+        .bounce-anim { animation: bounce 0.3s ease-in-out; }
+
+        /* Emoji Selection Style */
+        .emoji-item { transition: all 0.3s ease; border: 2px solid transparent; }
+        .emoji-selected { 
+            background-color: rgba(34, 197, 94, 0.2) !important; 
+            border-color: #22c55e !important;
+            animation: fadeIn 0.3s ease;
         }
 
-        /* Pin Animation für Zynox */
-        @keyframes pulse-pin {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        .rainbow-btn {
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+            background-size: 200% 200%;
+            animation: rainbowMove 3s linear infinite;
+            color: white;
+            font-weight: 900;
         }
-        .btn-pin-anim { 
-            animation: pulse-pin 1.5s infinite; 
-            background-color: #0891b2 !important; 
-            border-color: #22d3ee !important;
-            color: white !important;
-        }
-
-        /* Overlay Styles */
-        #lightbox, #changelog-overlay, #admin-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(12px);
-        }
-
-        #lightbox { background: rgba(0,0,0,0.95); }
-        #changelog-overlay, #admin-overlay { background: rgba(0,0,0,0.8); }
-
-        .changelog-frame, .admin-frame {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
+        @keyframes rainbowMove { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
 
         .agent-card {
             background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
@@ -67,82 +54,73 @@
             background-size: 15px 15px;
         }
 
+        #admin-tag-action-frame {
+            display: none;
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center;
+        }
+
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+        }
+
         .hidden { display: none; }
-        .terminal-text { font-family: 'Fira Code', monospace; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #333; }
-
-        /* Form Styling */
-        input, textarea, select {
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        input:focus, textarea:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
-        }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="lightbox" onclick="this.style.display='none'">
-        <button class="absolute top-6 right-6 text-white text-5xl hover:text-blue-500 transition">&times;</button>
-        <img id="lightbox-img" src="" class="max-w-[90%] max-h-[90%] object-contain shadow-2xl">
+    <div id="censored-warning" class="hidden fixed inset-0 z-[3000] flex items-center justify-center backdrop-blur-md">
+        <div class="bg-red-600 p-8 rounded-2xl border-4 border-white shadow-2xl text-center fade-in max-w-sm">
+            <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+            <h2 class="text-xl font-black uppercase mb-2">VERBOTENE WÖRTER!</h2>
+            <p class="font-bold">Sie haben Schümpfwörter oder verbotene Wörter genutzt. Bitte wähle ein anderen Text!</p>
+            <button onclick="document.getElementById('censored-warning').classList.add('hidden')" class="mt-6 bg-white text-red-600 px-6 py-2 rounded-full font-black uppercase hover:scale-110 transition">OK</button>
+        </div>
     </div>
 
-    <div id="admin-overlay" class="p-4">
-        <div class="admin-frame w-full max-w-xl rounded-lg overflow-hidden border border-red-900/30">
+    <div id="lightbox" onclick="this.style.display='none'">
+        <button class="absolute top-6 right-6 text-white text-5xl hover:text-blue-500 transition">&times;</button>
+        <img id="lightbox-img" src="" class="max-w-[90%] max-h-[90%] object-contain">
+    </div>
+
+    <div id="admin-overlay" class="p-4 hidden">
+        <div class="admin-frame w-full max-w-2xl rounded-lg overflow-hidden border border-red-900/30 mx-auto mt-10">
             <div class="bg-black border-b border-zinc-800 p-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-red-500/10 p-2 rounded border border-red-500/20">
-                         <i class="fas fa-shield-halved text-red-500 text-sm"></i>
-                    </div>
-                    <h2 class="text-red-500 font-black italic tracking-tighter text-lg uppercase">Administrator Panel</h2>
-                </div>
-                <button onclick="document.getElementById('admin-overlay').style.display='none'" class="text-zinc-500 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800">
-                    <i class="fas fa-times"></i>
-                </button>
+                <h2 class="text-red-500 font-black italic text-lg uppercase">Administrator Panel</h2>
+                <button onclick="document.getElementById('admin-overlay').classList.add('hidden')" class="text-zinc-500 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-6 space-y-6">
-                <button onclick="deleteAllAkten()" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/30 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition">
-                    <i class="fas fa-trash-alt mr-2"></i> ADMINISTRATOR LÖSCHEN (Alle Akten vernichten)
-                </button>
-                <div class="border-t border-zinc-800 pt-4">
-                    <h3 class="text-white text-xs font-black uppercase mb-4 italic">Gesperrte Agenten (IP-Bann)</h3>
-                    <div id="ban-list" class="space-y-2 max-h-48 overflow-y-auto">
-                        </div>
+            <div class="p-6 space-y-6 bg-zinc-900">
+                <div>
+                    <h3 class="text-white text-xs font-black uppercase mb-4 italic">Profil Tags:</h3>
+                    <div id="admin-tag-list" class="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2"></div>
                 </div>
+                <button onclick="deleteAllAkten()" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/30 py-4 rounded-xl font-black text-[10px] uppercase transition">ALLE AKTEN LÖSCHEN</button>
+                <div id="ban-list" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
-    <div id="changelog-overlay" class="p-4">
-        <div class="changelog-frame w-full max-w-xl rounded-lg overflow-hidden border border-green-900/30">
-            <div class="bg-black border-b border-zinc-800 p-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-green-500/10 p-2 rounded border border-green-500/20">
-                         <i class="fas fa-terminal text-green-500 text-sm"></i>
-                    </div>
-                    <h2 class="text-green-500 font-black italic tracking-tighter text-lg uppercase">SYSTEM CHANGELOG</h2>
-                </div>
-                <button onclick="document.getElementById('changelog-overlay').style.display='none'" class="text-zinc-500 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800">
-                    <i class="fas fa-times"></i>
+    <div id="admin-tag-action-frame">
+        <div class="bg-zinc-900 border border-zinc-700 p-8 rounded-2xl fade-in text-center max-w-sm">
+            <h3 class="text-white font-black mb-6 text-xl italic uppercase">Was willst du machen?</h3>
+            <div class="flex gap-4 justify-center">
+                <button id="admin-delete-tag-btn" class="bg-red-600 hover:bg-red-700 p-4 rounded-xl flex flex-col items-center gap-2 w-32 transition">
+                    <i class="fas fa-trash-alt text-xl"></i>
+                    <span class="text-[10px] font-bold uppercase">Löschen</span>
+                </button>
+                <button id="admin-super-tag-btn" class="bg-yellow-500 hover:bg-yellow-600 p-4 rounded-xl flex flex-col items-center gap-2 w-32 text-black transition">
+                    <i class="fas fa-users text-xl"></i>
+                    <span class="text-[10px] font-bold uppercase">Super-Tag</span>
                 </button>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="border border-green-500/20 bg-green-500/5 p-4 rounded-lg">
-                    <span class="text-green-500 font-mono text-xs font-bold block mb-1">v1.1.5 - MEDIA & EDIT UPDATE</span>
-                    <h3 class="text-yellow-500 font-black italic uppercase text-xl mb-3">SYSTEM VOLLSTÄNDIG</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed terminal-text">
-                        - Dateiupload für Profilbilder & Beweise aktiviert.<br>
-                        - Bearbeitungsmodus für Akten wiederhergestellt.<br>
-                        - Zynox Admin-Panel & Pin-System aktiv.
-                    </p>
-                </div>
-            </div>
+            <button onclick="document.getElementById('admin-tag-action-frame').style.display='none'" class="mt-6 text-zinc-500 uppercase text-[10px] font-bold tracking-widest">Abbrechen</button>
         </div>
     </div>
 
@@ -150,23 +128,16 @@
         <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-2xl">
             <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-1 uppercase italic text-white">Account Erstellen</h2>
             <p class="text-[10px] text-zinc-500 text-center mb-10 tracking-[0.2em] uppercase">Authentifizierung erforderlich</p>
-            
             <div class="space-y-5">
-                <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Benutzername</label>
-                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
-                        <i class="fas fa-user text-purple-500 mr-3"></i>
-                        <input type="text" id="auth-user" placeholder="Agent Name..." class="bg-transparent border-none outline-none w-full text-sm text-white">
-                    </div>
+                <div class="bg-black border border-zinc-700 rounded-lg p-3 flex items-center">
+                    <i class="fas fa-user text-purple-500 mr-3"></i>
+                    <input type="text" id="auth-user" placeholder="Agent Name..." class="bg-transparent outline-none w-full text-sm text-white">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase italic">Passwort</label>
-                    <div class="flex items-center bg-black border border-zinc-700 rounded-lg p-3">
-                        <i class="fas fa-key text-blue-500 mr-3"></i>
-                        <input type="password" id="auth-pass" class="bg-transparent border-none outline-none w-full text-sm text-white">
-                    </div>
+                <div class="bg-black border border-zinc-700 rounded-lg p-3 flex items-center">
+                    <i class="fas fa-key text-blue-500 mr-3"></i>
+                    <input type="password" id="auth-pass" placeholder="Passwort" class="bg-transparent outline-none w-full text-sm text-white">
                 </div>
-                <button id="auth-btn" onclick="handleAuthAction()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black tracking-widest uppercase transition">Account Erstellen</button>
+                <button id="auth-btn" onclick="handleAuthAction()" class="w-full bg-zinc-100 hover:bg-white text-black py-4 rounded-lg text-xs font-black uppercase transition">Bestätigen</button>
                 <p id="auth-toggle-text" class="text-center text-xs text-zinc-500">
                     Schon registriert? <a href="#" onclick="setAuthMode('login')" class="text-blue-400 font-bold">Hier einloggen.</a>
                 </p>
@@ -180,25 +151,21 @@
                 <div class="flex items-center space-x-8">
                     <span class="font-black text-2xl italic tracking-tighter">AGENT<span class="text-blue-600">DB</span></span>
                     <div class="flex space-x-4">
-                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition text-white"><i class="fas fa-columns mr-1"></i> Dashboard</button>
-                        <button onclick="prepareCreateView()" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase"><i class="fas fa-plus-circle mr-1"></i> Akte Erstellen</button>
-                        <button id="admin-nav-btn" onclick="openAdmin()" class="hidden text-xs font-bold text-red-500 hover:bg-red-500/10 px-2 py-1 rounded transition uppercase"><i class="fas fa-shield-halved mr-1 text-red-500"></i> Administrator</button>
+                        <button onclick="showView('dashboard')" class="text-xs font-bold uppercase hover:text-blue-500 transition text-white">Dashboard</button>
+                        <button onclick="prepareCreateView()" class="text-xs font-bold text-blue-400 hover:text-white transition uppercase">Akte Erstellen</button>
+                        <button id="admin-nav-btn" onclick="openAdmin()" class="hidden text-xs font-bold text-red-500 uppercase px-2 py-1 rounded transition">Administrator</button>
                     </div>
                 </div>
-                
                 <div class="flex items-center space-x-6">
-                    <button onclick="document.getElementById('changelog-overlay').style.display='flex'" class="text-[11px] font-black text-green-500 hover:text-green-400 transition bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
-                        v1.1.5
-                    </button>
                     <div class="relative">
                         <button onclick="document.getElementById('profile-menu').classList.toggle('hidden')" class="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-1.5 pr-4 rounded-full">
                             <img id="nav-avatar" src="" class="w-8 h-8 rounded-full object-cover">
-                            <span id="nav-username" class="text-xs font-bold uppercase tracking-widest text-white">AGENT</span>
+                            <span id="nav-username" class="text-xs font-bold uppercase text-white">AGENT</span>
                         </button>
-                        <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50">
-                            <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center text-white"><i class="fas fa-cog mr-3"></i> Einstellungen</button>
-                            <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 flex items-center text-white"><i class="fas fa-id-card mr-3"></i> Dienstausweis</button>
-                            <button onclick="logout()" class="w-full text-left p-4 text-xs font-bold hover:bg-red-500/10 text-red-500 flex items-center border-t border-zinc-800"><i class="fas fa-sign-out-alt mr-3"></i> Abmelden</button>
+                        <div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                            <button onclick="showView('settings')" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 text-white"><i class="fas fa-cog mr-3"></i> Einstellungen</button>
+                            <button onclick="showDienstausweis()" class="w-full text-left p-4 text-xs font-bold hover:bg-zinc-800 text-white"><i class="fas fa-id-card mr-3"></i> Dienstausweis</button>
+                            <button onclick="logout()" class="w-full text-left p-4 text-xs font-bold hover:bg-red-500/10 text-red-500 border-t border-zinc-800"><i class="fas fa-sign-out-alt mr-3"></i> Abmelden</button>
                         </div>
                     </div>
                 </div>
@@ -209,67 +176,81 @@
             <h2 id="welcome-msg" class="text-3xl font-black mb-8 italic uppercase text-white">WILLKOMMEN</h2>
 
             <div id="view-dashboard" class="view fade-in">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div class="flex flex-col md:flex-row justify-between gap-4 mb-8">
                     <div class="flex items-center bg-zinc-900 border border-zinc-800 p-3 rounded-xl w-full max-w-md">
-                        <i class="fas fa-search text-zinc-500 mr-3 ml-2"></i>
-                        <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Akte suchen..." class="bg-transparent border-none outline-none w-full text-sm text-white">
-                    </div>
-                    <div class="relative">
-                        <select id="prio-filter" onchange="renderDashboard()" class="bg-zinc-900 border border-zinc-800 text-white text-[10px] font-black uppercase px-4 py-3 rounded-xl outline-none cursor-pointer">
-                            <option value="All">Priorität: Alle</option>
-                            <option value="Leicht">Priorität: Leicht</option>
-                            <option value="Schwer">Priorität: Schwer</option>
-                            <option value="Kritisch">Priorität: Kritisch</option>
-                        </select>
+                        <i class="fas fa-search text-zinc-500 mr-3"></i>
+                        <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Akte suchen..." class="bg-transparent outline-none w-full text-sm text-white">
                     </div>
                 </div>
-
-                <div id="pinned-section" class="mb-10 hidden">
-                    <h3 class="text-cyan-400 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-thumbtack mr-2"></i> GEPINNTE AKTEN</h3>
-                    <div id="pinned-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </div>
-
-                <div id="fav-section" class="mb-10 hidden">
-                    <h3 class="text-yellow-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-star mr-2"></i> Markierte Akten</h3>
-                    <div id="fav-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </div>
-
-                <h3 class="text-blue-500 text-[10px] font-black mb-4 uppercase tracking-widest"><i class="fas fa-folder-open mr-2"></i> ALLE AKTEN</h3>
                 <div id="akte-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <div id="view-settings" class="view hidden max-w-2xl mx-auto space-y-8">
+                <div class="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
+                    <h3 class="font-black mb-6 uppercase italic text-white underline decoration-blue-500 decoration-4">Profil Tag:</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4">
+                            <button id="emoji-opener" onclick="toggleEmojiPicker()" class="w-16 h-16 bg-black border-2 border-zinc-700 rounded-2xl flex items-center justify-center text-3xl hover:border-blue-500 transition">
+                                <span id="current-emoji-display">?</span>
+                            </button>
+                            <span class="text-xs text-zinc-500 font-bold uppercase italic">Emoji wählen & Klick für Effekt</span>
+                        </div>
+
+                        <div id="emoji-picker-frame" class="hidden bg-black/50 border border-zinc-800 p-4 rounded-xl grid grid-cols-5 gap-3 fade-in relative">
+                            <button onclick="toggleEmojiPicker()" class="absolute -top-2 -right-2 bg-red-600 w-6 h-6 rounded-full text-xs font-bold">X</button>
+                            <button onclick="selectEmoji('crown', this)" class="emoji-item p-2 rounded-lg bg-zinc-900"><img src="https://i.imgur.com/vH9FvGq.png" class="w-full"></button>
+                            <button onclick="selectEmoji('diamond', this)" class="emoji-item p-2 rounded-lg bg-zinc-900"><img src="https://i.imgur.com/u3D9SgX.png" class="w-full"></button>
+                            <button onclick="selectEmoji('trophy', this)" class="emoji-item p-2 rounded-lg bg-zinc-900"><img src="https://i.imgur.com/S6M5n0t.png" class="w-full"></button>
+                            <button onclick="selectEmoji('money', this)" class="emoji-item p-2 rounded-lg bg-zinc-900"><img src="https://i.imgur.com/k9E6I7y.png" class="w-full"></button>
+                            <button onclick="selectEmoji('heart', this)" class="emoji-item p-2 rounded-lg bg-zinc-900"><img src="https://i.imgur.com/8m5XNlE.png" class="w-full"></button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-zinc-500 uppercase">Tag Title (Max 10 Wörter):</label>
+                            <input type="text" id="tag-title-input" placeholder="Titel eingeben..." class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none text-white focus:border-blue-500 transition">
+                        </div>
+
+                        <button id="save-tag-btn" onclick="saveTag()" class="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)]">SPEICHERN</button>
+                    </div>
+
+                    <div class="mt-10 border-t border-zinc-800 pt-6">
+                        <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 italic">Profil Tag Save (Max 5):</h3>
+                        <div id="tag-save-list" class="space-y-3"></div>
+                    </div>
+
+                    <div class="mt-10 border-t border-zinc-800 pt-6">
+                        <h3 class="text-xs font-black text-zinc-400 uppercase mb-4 italic">Profil Tag Join:</h3>
+                        <div id="join-tag-list" class="space-y-2"></div>
+                        <button onclick="saveJoinedTag()" class="mt-4 w-full bg-green-600 py-3 rounded-lg text-[10px] font-black uppercase">Auswahl Speichern</button>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+                    <h3 class="font-black mb-6 uppercase text-white">ID-Einstellungen</h3>
+                    <input type="file" id="upload-avatar" class="w-full text-xs text-zinc-400 mb-4">
+                    <input type="color" id="set-card-color" class="w-full h-10 bg-black border border-zinc-800 rounded mb-4">
+                    <button onclick="saveGeneralSettings()" class="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase">Sichern</button>
+                </div>
             </div>
 
             <div id="view-create-akte" class="view hidden max-w-2xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
                 <h3 id="form-title" class="text-xl font-black mb-6 italic uppercase text-white">Akte Registrieren</h3>
                 <div class="space-y-4">
                     <input type="text" id="akte-title" placeholder="Titel der Akte" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none text-white">
-                    <textarea id="akte-stammdaten" placeholder="Stammdaten / Sachverhalt..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none text-white"></textarea>
+                    <textarea id="akte-stammdaten" placeholder="Stammdaten..." rows="5" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm outline-none text-white"></textarea>
                     <select id="akte-prio" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm uppercase text-white outline-none">
                         <option value="Leicht">Leicht</option>
                         <option value="Schwer">Schwer</option>
                         <option value="Kritisch">Kritisch</option>
                     </select>
-                    <button id="save-akte-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase transition">Akte Sichern.</button>
+                    <button id="save-akte-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xs uppercase transition">Akte Sichern</button>
                     <button onclick="showView('dashboard')" class="w-full bg-zinc-800 text-zinc-400 py-3 rounded-xl font-black text-[10px] uppercase transition">Abbrechen</button>
                 </div>
             </div>
 
             <div id="view-details" class="view hidden fade-in">
                 <div id="details-content"></div>
-            </div>
-
-            <div id="view-settings" class="view hidden max-w-xl mx-auto bg-zinc-900 p-8 rounded-2xl border border-zinc-800 fade-in">
-                <h3 class="font-black mb-6 uppercase italic text-white"><i class="fas fa-user-cog mr-2"></i> Profil Einstellungen</h3>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-[10px] text-zinc-500 uppercase font-bold mb-2">Profilbild vom Gerät hochladen</label>
-                        <input type="file" id="upload-avatar" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-zinc-500 uppercase font-bold mb-2">ID-Card Akzentfarbe</label>
-                        <input type="color" id="set-card-color" class="w-full h-10 bg-black border border-zinc-800 rounded">
-                    </div>
-                    <button onclick="saveSettings()" class="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase hover:bg-zinc-200 transition">Sichern & System Neustart</button>
-                </div>
             </div>
         </main>
     </div>
@@ -278,13 +259,14 @@
         <div class="agent-card w-full max-w-md p-8 border-r-8 relative shadow-2xl" id="card-border-render">
             <p class="text-[9px] text-zinc-400 font-black tracking-widest mb-1">AGENTDB IDENTITY</p>
             <h2 id="card-name" class="text-4xl font-black uppercase mb-6 italic tracking-tighter text-white">NAME</h2>
-            <div class="space-y-2 text-xs text-zinc-300">
+            <div id="card-tag-box" class="mb-4"></div> <div class="space-y-2 text-xs text-zinc-300">
                 <p><span class="text-zinc-500 font-bold uppercase mr-2">ID:</span> <span id="card-id" class="font-mono text-blue-400">PDB-0000</span></p>
                 <p><span class="text-zinc-500 font-bold uppercase mr-2">Beigetreten:</span> <span id="card-joined">01/2026</span></p>
+                <p><span class="text-zinc-500 font-bold uppercase mr-2">PROFIL-TAG:</span> <span id="card-tag-text">Kein Tag</span></p>
             </div>
             <div class="mt-12 flex justify-between items-end">
                 <p class="text-xs font-bold text-zinc-500 flex items-center uppercase"><i class="fas fa-shield-alt mr-2"></i> Official ID</p>
-                <div class="w-24 h-32 bg-zinc-800 border-2 rounded overflow-hidden" id="card-avatar-border">
+                <div class="w-24 h-32 bg-zinc-800 border-2 rounded overflow-hidden">
                     <img id="card-avatar" src="" class="w-full h-full object-cover">
                 </div>
             </div>
@@ -293,7 +275,7 @@
     </div>
 
     <script>
-        // --- FIREBASE KONFIGURATION ---
+        // --- FIREBASE INITIALISIERUNG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDOb5MW38F-Fa7izcp9mwirWf7Slv88WR8",
             authDomain: "agentdb-1d51c.firebaseapp.com",
@@ -302,64 +284,51 @@
             messagingSenderId: "883419188103",
             appId: "1:883419188103:web:045744479f338ec51ea122"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         // --- STATE ---
         let currentUser = JSON.parse(localStorage.getItem('logged_in_user')) || null;
-        let globalAkten = [];
         let authMode = 'register';
-        let activeAkteId = null;
-        let userIP = "Unbekannt";
-
-        // --- IP CHECK & BANN ---
-        fetch('https://api.ipify.org?format=json').then(r => r.json()).then(async d => {
-            userIP = d.ip;
-            const banDoc = await db.collection("banned_ips").doc(userIP).get();
-            if(banDoc.exists) {
-                document.body.innerHTML = "<div class='flex flex-col items-center justify-center h-screen bg-black text-red-600 font-black'><h1 class='text-5xl uppercase italic mb-4'>Zugriff Verweigert</h1><p class='text-zinc-500'>Sperre durch Administrator aktiv.</p></div>";
-            }
-        });
+        let globalAkten = [];
+        let selectedEmoji = null;
+        let selectedJoinTag = null;
+        const bannedWords = ["sex", "hurensohn", "hundesohn", "67", "six seven", "bastard", "doxx", "d0xx", "bitch", "schlampe"];
+        const emojiMap = {
+            crown: "https://i.imgur.com/vH9FvGq.png",
+            diamond: "https://i.imgur.com/u3D9SgX.png",
+            trophy: "https://i.imgur.com/S6M5n0t.png",
+            money: "https://i.imgur.com/k9E6I7y.png",
+            heart: "https://i.imgur.com/8m5XNlE.png"
+        };
 
         window.onload = () => { if(currentUser) loginSuccess(); };
 
-        // --- HELPER: FILE TO BASE64 ---
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // --- AUTH ---
+        // --- AUTH FUNKTIONEN ---
         function setAuthMode(mode) {
             authMode = mode;
             document.getElementById('auth-title').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
-            document.getElementById('auth-btn').innerText = mode === 'register' ? "Account Erstellen" : "Einloggen";
+            document.getElementById('auth-btn').innerText = mode === 'register' ? "Registrieren" : "Login";
         }
 
         async function handleAuthAction() {
             const user = document.getElementById('auth-user').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
-            if(!user || !pass) return alert("Daten unvollständig!");
+            if(!user || !pass) return alert("Fehlende Daten!");
 
             if(authMode === 'register') {
                 const newUser = {
-                    name: user, pass: pass,
-                    id: 'PDB-' + Math.floor(1000 + Math.random() * 8999),
-                    joined: new Date().toLocaleDateString('de-DE', { month: '2-digit', year: 'numeric' }),
-                    avatar: 'https://i.imgur.com/8m5XNlE.png',
-                    cardColor: '#3b82f6', favorites: []
+                    name: user, pass: pass, id: 'PDB-' + Math.floor(1000 + Math.random()*9000),
+                    joined: '02/2026', avatar: 'https://i.imgur.com/8m5XNlE.png',
+                    cardColor: '#3b82f6', activeTagId: null
                 };
                 localStorage.setItem(`user_${user}`, JSON.stringify(newUser));
-                currentUser = newUser; loginSuccess();
+                currentUser = newUser;
+                loginSuccess();
             } else {
                 const stored = JSON.parse(localStorage.getItem(`user_${user}`));
                 if(stored && stored.pass === pass) { currentUser = stored; loginSuccess(); }
-                else alert("Fehler!");
+                else alert("Falsche Daten!");
             }
         }
 
@@ -369,255 +338,280 @@
             document.getElementById('main-interface').classList.remove('hidden');
             document.getElementById('nav-username').innerText = currentUser.name;
             document.getElementById('nav-avatar').src = currentUser.avatar;
-            document.getElementById('welcome-msg').innerText = `Willkommen, Agent ${currentUser.name}`;
-            
-            if(currentUser.name === "Zynox") {
-                document.getElementById('admin-nav-btn').classList.remove('hidden');
-                listenToBans();
-            }
+            if(currentUser.name === "Zynox") document.getElementById('admin-nav-btn').classList.remove('hidden');
             listenToCloud();
+            listenToTags();
         }
 
-        // --- DATABASE LISTENERS ---
-        function listenToCloud() {
-            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                globalAkten = snapshot.docs.map(doc => ({ cloudId: doc.id, ...doc.data() }));
-                renderDashboard();
-                if(activeAkteId) openAkte(activeAkteId);
+        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
+
+        // --- TAG SYSTEM LOGIC ---
+        function toggleEmojiPicker() {
+            const frame = document.getElementById('emoji-picker-frame');
+            if(frame.classList.contains('hidden')) {
+                frame.classList.remove('hidden');
+                frame.classList.add('fade-in');
+            } else {
+                frame.classList.add('fade-out');
+                setTimeout(() => { frame.classList.add('hidden'); frame.classList.remove('fade-out'); }, 300);
+            }
+        }
+
+        function selectEmoji(type, btn) {
+            // Fade Out alter Hintergrund
+            document.querySelectorAll('.emoji-item').forEach(el => el.classList.remove('emoji-selected'));
+            
+            // Fade In neuer Hintergrund
+            btn.classList.add('emoji-selected');
+            selectedEmoji = type;
+            document.getElementById('current-emoji-display').innerHTML = `<img src="${emojiMap[type]}" class="w-10">`;
+        }
+
+        async function saveTag() {
+            const title = document.getElementById('tag-title-input').value.trim();
+            const btn = document.getElementById('save-tag-btn');
+
+            // Validierung
+            if(!selectedEmoji || !title) return alert("Emoji und Titel fehlen!");
+            if(title.split(' ').length > 10) return alert("Maximum 10 Wörter!");
+
+            const checkTitle = title.toLowerCase();
+            if(bannedWords.some(w => checkTitle.includes(w))) {
+                document.getElementById('censored-warning').classList.remove('hidden');
+                return;
+            }
+
+            // Check Limit 5
+            const snap = await db.collection("profile_tags").where("owner", "==", currentUser.name).get();
+            if(snap.size >= 5) return alert("Du hast bereits 5 Tags gespeichert! Lösche einen zum Erstellen.");
+
+            // Animation
+            btn.classList.add('bounce-anim');
+            setTimeout(() => btn.classList.remove('bounce-anim'), 300);
+
+            await db.collection("profile_tags").add({
+                owner: currentUser.name,
+                emoji: selectedEmoji,
+                title: title,
+                isSuper: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            document.getElementById('tag-title-input').value = "";
+            alert("Tag erfolgreich gespeichert!");
         }
 
-        function listenToBans() {
-            db.collection("banned_ips").onSnapshot(s => {
-                const list = document.getElementById('ban-list');
+        function listenToTags() {
+            // Eigene Tags (Save Slots)
+            db.collection("profile_tags").where("owner", "==", currentUser.name).onSnapshot(s => {
+                const list = document.getElementById('tag-save-list');
                 list.innerHTML = "";
                 s.forEach(doc => {
-                    list.innerHTML += `<div class="flex items-center justify-between bg-black p-3 rounded border border-red-900/20">
-                        <div><p class="text-[10px] text-white font-bold">${doc.data().name}</p></div>
-                        <button onclick="unbanUser('${doc.id}')" class="text-xs text-red-500"><i class="fas fa-unlock"></i></button>
-                    </div>`;
+                    const data = doc.data();
+                    const activeClass = currentUser.activeTagId === doc.id ? 'border-green-500 bg-green-900/20' : 'border-zinc-800';
+                    
+                    list.innerHTML += `
+                        <div onmouseover="this.querySelector('.tag-del').classList.remove('hidden')" onmouseout="this.querySelector('.tag-del').classList.add('hidden')" 
+                             onclick="activateTag('${doc.id}')"
+                             class="relative flex items-center justify-between p-3 border ${activeClass} rounded-xl cursor-pointer hover:border-blue-500 transition">
+                            <div class="flex items-center gap-3">
+                                <img src="${emojiMap[data.emoji]}" class="w-5">
+                                <span class="text-xs font-bold text-white uppercase">${data.title}</span>
+                            </div>
+                            <button onclick="deleteTag(event, '${doc.id}')" class="tag-del hidden text-red-500 px-2 fade-in"><i class="fas fa-times"></i></button>
+                        </div>
+                    `;
+                });
+            });
+
+            // Joinable Tags (Super Tags + Public)
+            db.collection("profile_tags").onSnapshot(s => {
+                const list = document.getElementById('join-tag-list');
+                const adminList = document.getElementById('admin-tag-list');
+                list.innerHTML = `
+                    <div onclick="selectJoinTag(null)" class="p-2 bg-black border border-zinc-800 rounded text-[10px] font-bold uppercase cursor-pointer hover:bg-zinc-800">Tag Löschen / Kein Tag</div>
+                `;
+                adminList.innerHTML = "";
+
+                s.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Joinable List (Only Super Tags or if you are the owner)
+                    if(data.isSuper || data.owner === currentUser.name) {
+                        const selClass = selectedJoinTag === doc.id ? 'border-blue-500 bg-blue-500/10' : 'border-zinc-800';
+                        list.innerHTML += `
+                            <div onclick="selectJoinTag('${doc.id}')" class="flex items-center gap-3 p-2 border ${selClass} rounded cursor-pointer transition">
+                                <img src="${emojiMap[data.emoji]}" class="w-4">
+                                <span class="text-[10px] font-bold uppercase text-white">${data.title}</span>
+                            </div>
+                        `;
+                    }
+
+                    // Admin View
+                    if(currentUser.name === "Zynox") {
+                        adminList.innerHTML += `
+                            <div onclick="openAdminTagAction('${doc.id}', ${data.isSuper})" class="bg-black p-3 rounded border border-zinc-800 flex justify-between items-center cursor-pointer hover:bg-zinc-800">
+                                <span class="text-[10px] font-bold">${data.title} (${data.owner})</span>
+                                ${data.isSuper ? '<i class="fas fa-users text-yellow-500"></i>' : ''}
+                            </div>
+                        `;
+                    }
                 });
             });
         }
 
-        // --- DASHBOARD RENDERING ---
-        function renderDashboard() {
-            const list = document.getElementById('akte-list');
-            const favList = document.getElementById('fav-list');
-            const pinnedList = document.getElementById('pinned-list');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const filter = document.getElementById('prio-filter').value;
-            
-            list.innerHTML = ""; favList.innerHTML = ""; pinnedList.innerHTML = "";
-
-            globalAkten.forEach(a => {
-                if(a.title.toLowerCase().includes(search) && (filter === 'All' || a.prio === filter)) {
-                    const isFav = currentUser.favorites?.includes(a.cloudId);
-                    const card = `
-                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] px-2 py-1 bg-black rounded border border-zinc-800 text-zinc-500 uppercase">AKT-GLOBAL</span>
-                            <span class="text-[10px] font-black uppercase ${a.prio === 'Kritisch' ? 'text-red-500' : 'text-green-500'}">${a.prio}</span>
-                        </div>
-                        <h4 class="font-black text-xl mb-2 italic uppercase text-white">${a.title}</h4>
-                        <p class="text-[9px] text-zinc-600 mb-4">Ersteller: ${a.creator}</p>
-                        <div class="flex gap-2">
-                            <button onclick="openAkte('${a.cloudId}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black uppercase transition">Akte Öffnen</button>
-                            <button onclick="toggleFavorite('${a.cloudId}')" class="px-4 bg-zinc-800 rounded-xl text-${isFav ? 'yellow-500' : 'zinc-500'} transition">
-                                <i class="fas fa-star"></i>
-                            </button>
-                        </div>
-                    </div>`;
-
-                    if(a.pinned) pinnedList.innerHTML += card;
-                    if(isFav) favList.innerHTML += card;
-                    list.innerHTML += card;
-                }
-            });
-
-            document.getElementById('fav-section').classList.toggle('hidden', favList.innerHTML === "");
-            document.getElementById('pinned-section').classList.toggle('hidden', pinnedList.innerHTML === "");
+        async function activateTag(id) {
+            currentUser.activeTagId = id;
+            localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+            alert("Tag ausgewählt!");
         }
 
-        // --- AKTEN AKTIONEN ---
+        function selectJoinTag(id) {
+            selectedJoinTag = id;
+            listenToTags();
+        }
+
+        async function saveJoinedTag() {
+            currentUser.activeTagId = selectedJoinTag;
+            localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+            alert("Tag erfolgreich übernommen!");
+        }
+
+        async function deleteTag(e, id) {
+            e.stopPropagation();
+            if(confirm("Diesen Tag wirklich löschen?")) {
+                await db.collection("profile_tags").doc(id).delete();
+                if(currentUser.activeTagId === id) currentUser.activeTagId = null;
+                localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+            }
+        }
+
+        // --- ADMIN TAG ACTIONS ---
+        function openAdminTagAction(id, isSuper) {
+            const frame = document.getElementById('admin-tag-action-frame');
+            frame.style.display = 'flex';
+            
+            document.getElementById('admin-delete-tag-btn').onclick = async () => {
+                await db.collection("profile_tags").doc(id).delete();
+                frame.style.display = 'none';
+            };
+
+            document.getElementById('admin-super-tag-btn').onclick = async () => {
+                await db.collection("profile_tags").doc(id).update({ isSuper: !isSuper });
+                frame.style.display = 'none';
+            };
+        }
+
+        // --- DASHBOARD & AKTEN ---
+        function listenToCloud() {
+            db.collection("global_akten").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+                globalAkten = snapshot.docs.map(doc => ({ cloudId: doc.id, ...doc.data() }));
+                renderDashboard();
+            });
+        }
+
+        async function renderDashboard() {
+            const list = document.getElementById('akte-list');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            list.innerHTML = "";
+
+            for(const a of globalAkten) {
+                if(a.title.toLowerCase().includes(search)) {
+                    // Hole Tag des Erstellers
+                    const tagSnap = await db.collection("profile_tags").where("owner", "==", a.creator).get();
+                    let tagHTML = "";
+                    tagSnap.forEach(tDoc => {
+                        const tData = tDoc.data();
+                        // Nur anzeigen wenn dieser Tag vom Ersteller als aktiv markiert wurde (simuliert)
+                        tagHTML = `<div class="tag-badge mt-2"><img src="${emojiMap[tData.emoji]}" class="w-3"> <span class="text-[8px] font-black uppercase text-zinc-400">${tData.title}</span></div>`;
+                    });
+
+                    list.innerHTML += `
+                        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative hover:border-blue-500/50 transition fade-in">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[9px] px-2 py-1 bg-black rounded border border-zinc-800 text-zinc-500 uppercase">AGENT: ${a.creator}</span>
+                                <span class="text-[10px] font-black uppercase text-red-500">${a.prio}</span>
+                            </div>
+                            <h4 class="font-black text-xl mb-1 italic uppercase text-white">${a.title}</h4>
+                            ${tagHTML}
+                            <div class="flex gap-2 mt-4">
+                                <button onclick="openAkte('${a.cloudId}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-[10px] font-black uppercase transition">Öffnen</button>
+                                <button onclick="showView('settings')" class="rainbow-btn px-4 rounded-xl text-[10px] uppercase">TAG JOIN</button>
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+
+        // --- CORE UI FUNKTIONEN ---
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + id).classList.remove('hidden');
+            document.getElementById('profile-menu').classList.add('hidden');
+        }
+
+        async function showDienstausweis() {
+            document.getElementById('card-name').innerText = currentUser.name;
+            document.getElementById('card-id').innerText = currentUser.id;
+            document.getElementById('card-joined').innerText = currentUser.joined;
+            document.getElementById('card-avatar').src = currentUser.avatar;
+            
+            const tagBox = document.getElementById('card-tag-box');
+            const tagText = document.getElementById('card-tag-text');
+            
+            if(currentUser.activeTagId) {
+                const tDoc = await db.collection("profile_tags").doc(currentUser.activeTagId).get();
+                if(tDoc.exists) {
+                    const tData = tDoc.data();
+                    tagBox.innerHTML = `<div class="inline-flex items-center gap-2 p-2 bg-zinc-800 rounded-lg border border-zinc-700">
+                        <img src="${emojiMap[tData.emoji]}" class="w-5"> <span class="text-[10px] font-black uppercase">${tData.title}</span>
+                    </div>`;
+                    tagText.innerText = tData.title;
+                }
+            } else {
+                tagBox.innerHTML = "";
+                tagText.innerText = "Kein Tag";
+            }
+            document.getElementById('modal-id').classList.remove('hidden');
+        }
+
+        function openAdmin() { document.getElementById('admin-overlay').classList.remove('hidden'); }
+        
+        // --- AKTE FUNKTIONEN ---
         function prepareCreateView() {
-            document.getElementById('form-title').innerText = "Akte Registrieren";
             document.getElementById('akte-title').value = "";
             document.getElementById('akte-stammdaten').value = "";
-            document.getElementById('save-akte-btn').innerText = "Akte Sichern";
             document.getElementById('save-akte-btn').onclick = saveAkte;
-            showView('create-akte');
-        }
-
-        function prepareEditView(id) {
-            const akte = globalAkten.find(a => a.cloudId === id);
-            document.getElementById('form-title').innerText = "Akte Bearbeiten";
-            document.getElementById('akte-title').value = akte.title;
-            document.getElementById('akte-stammdaten').value = akte.stammdaten;
-            document.getElementById('akte-prio').value = akte.prio;
-            document.getElementById('save-akte-btn').innerText = "Änderungen Speichern";
-            document.getElementById('save-akte-btn').onclick = () => updateAkte(id);
             showView('create-akte');
         }
 
         async function saveAkte() {
             const title = document.getElementById('akte-title').value;
-            const stammdaten = document.getElementById('akte-stammdaten').value;
+            const text = document.getElementById('akte-stammdaten').value;
             const prio = document.getElementById('akte-prio').value;
-            if(!title) return;
+            if(!title || !text) return alert("Fehler!");
 
             await db.collection("global_akten").add({
-                title, stammdaten, prio,
-                creator: currentUser.name,
-                creatorIP: userIP,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                entries: [],
-                pinned: false
+                title, text, prio, creator: currentUser.name, createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             showView('dashboard');
         }
 
-        async function updateAkte(id) {
-            const title = document.getElementById('akte-title').value;
-            const stammdaten = document.getElementById('akte-stammdaten').value;
-            const prio = document.getElementById('akte-prio').value;
-            await db.collection("global_akten").doc(id).update({ title, stammdaten, prio });
-            showView('dashboard');
-            alert("Akte erfolgreich aktualisiert.");
-        }
-
-        function openAkte(id) {
+        async function openAkte(id) {
             const akte = globalAkten.find(a => a.cloudId === id);
-            if(!akte) return;
-            activeAkteId = id; showView('details');
-            
-            const isCreator = akte.creator === currentUser.name;
-            const isZynox = currentUser.name === "Zynox";
-
-            document.getElementById('details-content').innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-3xl font-black uppercase italic text-white">${akte.title}</h2>
-                                <div class="flex gap-2">
-                                    ${(isCreator || isZynox) ? `<button onclick="prepareEditView('${id}')" class="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 text-[10px] font-black uppercase hover:bg-zinc-700 transition"><i class="fas fa-edit mr-2"></i> Edit</button>` : ''}
-                                    ${isZynox ? `<button onclick="togglePin('${id}')" class="px-4 py-2 rounded-lg border border-cyan-500/30 text-cyan-500 text-[10px] font-black uppercase transition ${akte.pinned ? 'btn-pin-anim' : ''}"><i class="fas fa-thumbtack mr-2"></i> ${akte.pinned ? 'Gepinnt' : 'Pinnen'}</button>` : ''}
-                                    ${(isCreator || isZynox) ? `<button onclick="deleteAkte('${id}')" class="px-4 py-2 rounded-lg bg-red-600 text-white text-[10px] font-black uppercase">Löschen</button>` : ''}
-                                </div>
-                            </div>
-                            <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase">Sachverhalt</p>
-                            <div class="bg-black/60 p-6 rounded-xl border border-zinc-800 text-sm text-zinc-300">${akte.stammdaten}</div>
-                        </div>
-                        
-                        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl">
-                            <h3 class="text-xs font-black mb-6 uppercase text-white">Beweismittel Hinzufügen</h3>
-                            <textarea id="entry-text" class="w-full bg-black border border-zinc-800 p-4 rounded-xl text-sm mb-4 outline-none text-white" placeholder="Was ist passiert?"></textarea>
-                            <div class="flex items-center justify-between">
-                                <input type="file" id="entry-file" accept="image/*" class="text-[10px] text-zinc-500 file:bg-zinc-800 file:border-0 file:text-white file:px-3 file:py-1 file:rounded-lg">
-                                <button onclick="addEntry('${id}')" class="bg-blue-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase">Sichern</button>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            ${akte.entries ? akte.entries.map((e, i) => `
-                                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl fade-in relative group">
-                                    <p class="text-[10px] font-black text-blue-400 uppercase mb-2">${e.author}</p>
-                                    <p class="text-sm text-zinc-300 mb-4">${e.text}</p>
-                                    ${e.file ? `<img src="${e.file}" onclick="zoomImg('${e.file}')" class="max-w-xs rounded-lg evidence-preview">` : ''}
-                                    ${(isCreator || e.author === currentUser.name || isZynox) ? `
-                                        <button onclick="deleteEntry('${id}', ${i})" class="absolute top-4 right-4 text-red-900 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-                                    ` : ''}
-                                </div>
-                            `).join('') : ''}
-                        </div>
+            const content = document.getElementById('details-content');
+            content.innerHTML = `
+                <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl fade-in max-w-3xl mx-auto">
+                    <div class="flex justify-between mb-8">
+                        <button onclick="showView('dashboard')" class="text-xs font-bold text-zinc-500 uppercase"><i class="fas fa-arrow-left"></i> Zurück</button>
+                        <span class="text-xs font-black text-red-500 uppercase">${akte.prio}</span>
                     </div>
-
-                    <div class="space-y-6">
-                        <button onclick="showView('dashboard')" class="w-full bg-zinc-800 text-white py-4 rounded-xl text-xs font-black uppercase">Dashboard</button>
-                    </div>
+                    <h2 class="text-4xl font-black italic uppercase mb-4">${akte.title}</h2>
+                    <p class="text-zinc-400 text-sm leading-relaxed mb-10 whitespace-pre-wrap">${akte.text}</p>
                 </div>`;
+            showView('details');
         }
 
-        async function addEntry(id) {
-            const text = document.getElementById('entry-text').value;
-            const fileInput = document.getElementById('entry-file').files[0];
-            let base64 = null;
-            if(fileInput) base64 = await fileToBase64(fileInput);
-            if(!text) return alert("Text fehlt!");
-
-            const akte = globalAkten.find(a => a.cloudId === id);
-            const newEntries = [...(akte.entries || []), { author: currentUser.name, text, file: base64, date: new Date().toISOString() }];
-            await db.collection("global_akten").doc(id).update({ entries: newEntries });
-        }
-
-        // --- ADMIN TOOLS ---
-        async function togglePin(id) {
-            const akte = globalAkten.find(a => a.cloudId === id);
-            await db.collection("global_akten").doc(id).update({ pinned: !akte.pinned });
-        }
-
-        async function deleteAkte(id) {
-            if(confirm("Akte unwiderruflich löschen?")) {
-                await db.collection("global_akten").doc(id).delete();
-                showView('dashboard');
-            }
-        }
-
-        async function deleteAllAkten() {
-            if(confirm("ALLE AKTEN LÖSCHEN?")) {
-                const s = await db.collection("global_akten").get();
-                s.forEach(doc => doc.ref.delete());
-            }
-        }
-
-        async function unbanUser(ip) {
-            await db.collection("banned_ips").doc(ip).delete();
-        }
-
-        // --- SETTINGS ---
-        async function saveSettings() {
-            const fileInput = document.getElementById('upload-avatar').files[0];
-            if(fileInput) currentUser.avatar = await fileToBase64(fileInput);
-            currentUser.cardColor = document.getElementById('set-card-color').value;
-            
-            localStorage.setItem(`user_${currentUser.name}`, JSON.stringify(currentUser));
-            localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
-            location.reload();
-        }
-
-        function showDienstausweis() {
-            document.getElementById('card-name').innerText = currentUser.name;
-            document.getElementById('card-id').innerText = currentUser.id;
-            document.getElementById('card-avatar').src = currentUser.avatar;
-            document.getElementById('card-border-render').style.borderColor = currentUser.cardColor;
-            document.getElementById('modal-id').classList.remove('hidden');
-        }
-
-        function toggleFavorite(id) {
-            if(!currentUser.favorites) currentUser.favorites = [];
-            const index = currentUser.favorites.indexOf(id);
-            if(index > -1) currentUser.favorites.splice(index, 1);
-            else currentUser.favorites.push(id);
-            localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
-            renderDashboard();
-        }
-
-        // --- UI CORE ---
-        function showView(view) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-            document.getElementById('profile-menu').classList.add('hidden');
-        }
-
-        function openAdmin() { document.getElementById('admin-overlay').style.display = 'flex'; }
-        function zoomImg(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').style.display = 'flex'; }
-        function logout() { localStorage.removeItem('logged_in_user'); location.reload(); }
-        async function deleteEntry(id, index) {
-            const a = globalAkten.find(x => x.cloudId === id);
-            const e = a.entries.filter((_, i) => i !== index);
-            await db.collection("global_akten").doc(id).update({ entries: e });
-        }
     </script>
 </body>
 </html>
